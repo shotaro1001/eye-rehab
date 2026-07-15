@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アイリハビリ — 眼球運動トレーニング</title>
+<style>
+  :root {
+    --bg: #f2f6fb;
+    --card: #ffffff;
+    --text: #26374a;
+    --muted: #7d8b9c;
+    --primary: #2b7de9;
+    --accent: #ff8c42;
+    --good: #2eb872;
+    --border: #dfe7f0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh; padding: 12px;
+  }
+  h1 { font-size: 1.15rem; margin: 4px 0 10px; }
+  .wrap { width: 100%; max-width: 760px; }
+
+  .tabbar { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tabbar button {
+    flex: 1; border: 1px solid var(--border); background: var(--card);
+    color: var(--muted); border-radius: 12px; padding: 10px 0;
+    font-size: .95rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .tabbar button.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px; margin-bottom: 12px;
+  }
+  .card h2 { font-size: 1rem; margin-bottom: 8px; }
+  .card p { font-size: .85rem; line-height: 1.7; color: var(--muted); }
+  .note { font-size: .75rem; color: var(--muted); line-height: 1.7; }
+
+  .mode-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .mode-icon { font-size: 1.6rem; }
+  .mode-head h2 { margin: 0; }
+  .settings { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+  .setting { display: flex; flex-direction: column; gap: 4px; min-width: 105px; flex: 1; }
+  .setting label { font-size: .72rem; color: var(--muted); font-weight: 700; }
+  .setting select, .setting input[type=text] {
+    border: 1px solid var(--border); border-radius: 10px; padding: 9px 8px;
+    font-size: .9rem; font-family: inherit; background: #fff; color: var(--text);
+  }
+  .btn {
+    border: none; border-radius: 12px; padding: 13px 22px;
+    font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .btn-start { background: var(--primary); color: #fff; width: 100%; }
+  .btn-sub { background: #eef3f9; color: var(--text); }
+  .btn-danger { background: #fdeaea; color: #c0392b; font-size: .8rem; padding: 9px 14px; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-small { padding: 9px 14px; font-size: .85rem; }
+  .check-row { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--muted); margin-top: 8px; }
+  .check-row input { width: 18px; height: 18px; accent-color: var(--primary); flex-shrink: 0; }
+
+  /* プログラム */
+  .prog-steps { list-style: none; margin: 8px 0; }
+  .prog-steps li {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #f6f9fd; border-radius: 10px; padding: 8px 12px; margin-bottom: 6px;
+    font-size: .84rem;
+  }
+  .prog-steps li button { border: none; background: none; cursor: pointer; font-size: 1rem; }
+  .prog-saved { margin-bottom: 10px; }
+  .prog-saved .prog-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border); padding: 8px 2px; font-size: .86rem;
+  }
+  .prog-saved .prog-row:last-child { border-bottom: none; }
+  .prog-saved .meta { color: var(--muted); font-size: .74rem; }
+
+  /* 記録タブ */
+  .stat-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+  .stat { flex: 1; min-width: 100px; background: #f6f9fd; border-radius: 12px; padding: 12px; text-align: center; }
+  .stat .num { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+  .stat .lbl { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+  .chart-box { overflow-x: auto; }
+  .chart-box svg { display: block; }
+  .sess-list { list-style: none; }
+  .sess-list li {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 9px 4px; border-bottom: 1px solid var(--border); font-size: .84rem;
+  }
+  .sess-list li:last-child { border-bottom: none; }
+  .sess-list .when { color: var(--muted); font-size: .74rem; }
+  .sess-list .score { font-weight: 700; color: var(--primary); white-space: nowrap; }
+
+  /* 訓練ステージ(全画面) */
+  #stage {
+    position: fixed; inset: 0; z-index: 50; background: #0f2138;
+    display: none; flex-direction: column;
+  }
+  #stage.show { display: flex; }
+  #cv { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hud {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    color: #cfe0f2; font-size: .85rem; pointer-events: none;
+  }
+  .hud .grow { flex: 1; }
+  .hud .pill {
+    background: rgba(255,255,255,.12); border-radius: 999px; padding: 5px 12px;
+    font-weight: 700; white-space: nowrap;
+  }
+  .hud button { pointer-events: auto; }
+  .btn-quit {
+    background: rgba(255,255,255,.16); color: #fff; border: none;
+    border-radius: 999px; padding: 7px 16px; font-size: .82rem; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .face-dot { width: 10px; height: 10px; border-radius: 50%; background: #e05555; display: inline-block; margin-right: 5px; vertical-align: -1px; }
+  .face-dot.ok { background: #2eb872; }
+
+  .stage-panel {
+    position: absolute; inset: 0; z-index: 8;
+    background: rgba(15, 33, 56, .9); color: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 20px; gap: 12px; overflow-y: auto;
+  }
+  .stage-panel.hidden { display: none; }
+  .stage-panel h2 { font-size: 1.25rem; }
+  .stage-panel p { font-size: .88rem; line-height: 1.8; max-width: 540px; color: #cfe0f2; }
+  .stage-panel .big { font-size: 3rem; font-weight: 700; }
+  .stage-panel .score-big { font-size: 2.6rem; font-weight: 700; color: #7fd4ff; }
+  .stage-panel .suggest { color: #ffe08a; font-size: .86rem; }
+  .stage-panel ul.summary { list-style: none; text-align: left; font-size: .9rem; line-height: 2; }
+  .err { color: #ffc9a3; font-size: .8rem; max-width: 480px; line-height: 1.7; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+  #toast {
+    position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,.92); color: var(--text);
+    padding: 8px 18px; border-radius: 999px; font-size: .85rem; font-weight: 700;
+    opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 9;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
+
+  footer { font-size: .7rem; color: var(--muted); margin: 14px 0 6px; text-align: center; line-height: 1.8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>👁 アイリハビリ <span style="font-size:.75rem;color:var(--muted);font-weight:400">— 眼球運動トレーニング</span></h1>
+
+  <div class="tabbar">
+    <button id="tabTrain" class="active">🎯 訓練</button>
+    <button id="tabLog">📈 記録</button>
+  </div>
+
+  <!-- ============ 訓練タブ ============ -->
+  <section id="viewTrain">
+    <div class="card">
+      <h2>はじめに</h2>
+      <p>
+        画面上のターゲットを目で追う訓練アプリです。Webカメラの虹彩検出で「ターゲットを追えているか」をおおまかに評価できます(映像は端末内で処理され、送信・保存されません)。<br>
+        画面から <b>50〜60cm</b> 離れ、顔が明るく映る場所で行いましょう。<b>頭は動かさず、目だけで</b>追うのが基本です(VORを除く)。
+      </p>
+      <p class="note" style="margin-top:8px">
+        ⚠️ めまい・吐き気・強い眼精疲労を感じたらすぐに中止してください。訓練の種類・速度・時間は、必ず医師・視能訓練士・リハビリ専門職の指導に従ってください。
+      </p>
+      <div class="check-row">
+        <input type="checkbox" id="optGazeDot" checked>
+        <label for="optGazeDot">訓練中に視線の推定位置(水色の点)を表示する</label>
+      </div>
+      <div class="check-row">
+        <input type="checkbox" id="optEmoji">
+        <label for="optEmoji">ターゲットを絵文字にする(⚽🎈🐝⭐🍎からランダム)</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="mode-head"><span class="mode-icon">🌊</span><h2>追従(スムーズパシュート)</h2></div>
+      <p>なめらかに動くターゲットを、目だけで途切れずに追いかけます。</p>
+      <div class="settings">
+        <div class="setting">
+          <label>パターン</label>
+          <select id="purPattern">
+            <option value="h">水平(左右)</option>
+            <option value="v">垂直(上下)</option>
+            <option value="diag">斜め</option>
+            <option value="zigzag">ジグザグ(反射)</option>
+            <option value="circle">円</option>
+            <option value="eight">8の字</option>
+          </select>
+        </div>
+        <div class="setting">
+          <label>速さ</label>
+          <select id="purSpeed">
+            <option value="slow">ゆっくり</option>
+            <option value="mid" selected>ふつう</option>
+            <option value="fast">はやい</option>
+            <option value="vary">変化(緩急)</option>
+          </select>
+        </div>
+        <div class="setting">
+          <label>時間</label>
+          <select id="purDur">
+            <option value="30">30秒</option>
+            <option value="60" selected>60秒</option>
+            <option value="90">90秒</option>
+          </select>
+        </div>
+      </div>
+      <div class="check-row" style="margin:0 0 10px">
+        <input type="checkbox" id="purBlank">
+        <label for="purBlank">ターゲットが時々消える(消えている間も動きを予測して目を動かす)</label>
+      </div>
+      <button class="btn btn-start" data-mode="pursuit">▶ 追従訓練をはじめる</button>
+    </div>
+
+    <div class="card">
+      <div class="mode-head"><span class="mode-icon">⚡</span><h2>サッケード(すばやい視線移動)</h2></div>
+      <p>ターゲットが離れた場所にジャンプします。<b>アンチ</b>は出た印と反対側を見る課題、<b>記憶誘導</b>は一瞬光った場所を覚えて合図の後に見る課題です。</p>
+      <div class="settings">
+        <div class="setting">
+          <label>課題</label>
+          <select id="sacTask">
+            <option value="norm">通常</option>
+            <option value="anti">アンチサッケード</option>
+            <option value="mem">記憶誘導</option>
+          </select>
+        </div>
+        <div class="setting">
+          <label>パターン</label>
+          <select id="sacPattern">
+            <option value="h2">水平2点</option>
+            <option value="v2">垂直2点</option>
+            <option value="diag">斜め2点</option>
+            <option value="rand">ランダム</option>
+          </select>
+        </div>
+        <div class="setting">
+          <label>テンポ</label>
+          <select id="sacSpeed">
+            <option value="slow">ゆっくり</option>
+            <option value="mid" selected>ふつう</option>
+            <option value="fast">はやい</option>
+          </select>
+        </div>
+        <div class="setting">
+          <label>時間</label>
+          <select id="sacDur">
+            <option value="30">30秒</option>
+            <option value="60" selected>60秒</option>
+            <option value="90">90秒</option>
+          </select>
+        </div>
+      </div>
+      <div class="check-row" style="margin:0 0 10px">
+        <input type="checkbox" id="sacDigits">
+        <label for="sacDigits">ターゲットに数字を表示する(声に出して読むと確認になります・通常課題のみ)</label>
+      </div>
+      <button class="btn btn-start" data-mode="saccade">▶ サッケード訓練をはじめる</button>
+    </div>
+
+    <div class="card">
+      <div class="mode-head"><span class="mode-icon">🎯</span><h2>固視(見つめ続ける)</h2></div>
+      <p>中央の一点を見つめ続け、視線のブレを計測します。妨害刺激オプションでは、周辺に現れる刺激に<b>目を向けないで</b>耐える訓練になります。</p>
+      <div class="settings">
+        <div class="setting">
+          <label>時間</label>
+          <select id="fixDur">
+            <option value="30" selected>30秒</option>
+            <option value="60">60秒</option>
+            <option value="90">90秒</option>
+          </select>
+        </div>
+      </div>
+      <div class="check-row" style="margin:0 0 10px">
+        <input type="checkbox" id="fixDistract">
+        <label for="fixDistract">周辺に妨害刺激を出す(つられて見てしまうと減点)</label>
+      </div>
+      <button class="btn btn-start" data-mode="fixation">▶ 固視訓練をはじめる</button>
+    </div>
+
+    <div class="card">
+      <div class="mode-head"><span class="mode-icon">🔎</span><h2>視覚探索</h2></div>
+      <p>たくさんの「●」の中から1つだけある「★」を探して<b>タップ / クリック</b>します。画面のすみずみまで視線を動かす練習です(カメラ不要)。</p>
+      <div class="settings">
+        <div class="setting">
+          <label>難易度</label>
+          <select id="schLevel">
+            <option value="easy">やさしい(18個)</option>
+            <option value="mid" selected>ふつう(30個)</option>
+            <option value="hard">むずかしい(44個)</option>
+          </select>
+        </div>
+        <div class="setting">
+          <label>時間</label>
+          <select id="schDur">
+            <option value="30">30秒</option>
+            <option value="60" selected>60秒</option>
+            <option value="90">90秒</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-start" data-mode="search">▶ 視覚探索をはじめる</button>
+    </div>
+
+    <div class="card">
+      <div class="mode-head"><span class="mode-icon">📖</span><h2>読みスキャン</h2></div>
+      <p>文章を読むときのように、左から右へ・上の行から下の行へ、順番に光る場所を目で追います。行末から次の行頭への大きな視線移動が練習ポイントです。</p>
+      <div class="settings">
+        <div class="setting">
+          <label>テンポ</label>
+          <select id="scnSpeed">
+            <option value="slow">ゆっくり</option>
+            <option value="mid" selected>ふつう</option>
+            <option value="fast">はやい</option>
+          </select>
+        </div>
+        <div class="setting">
+          <label>時間</label>
+          <select id="scnDur">
+            <option value="30">30秒</option>
+            <option value="60" selected>60秒</option>
+            <option value="90">90秒</option>
+          </select>
+        </div>
+      </div>
+      <div class="check-row" style="margin:0 0 10px">
+        <input type="checkbox" id="scnDigits">
+        <label for="scnDigits">数字を並べて表示する(光った場所の数字を声に出して読む)</label>
+      </div>
+      <button class="btn btn-start" data-mode="scan">▶ 読みスキャンをはじめる</button>
+    </div>
+
+    <div class="card">
+      <div class="mode-head"><span class="mode-icon">🔄</span><h2>VOR(前庭動眼反射)</h2></div>
+      <p>ターゲットを見つめたまま、合図に合わせて頭を振ります。<b>×2</b>ではターゲットが頭と反対方向に動く、より難しい課題になります(めまいのリハビリで使われる訓練です)。</p>
+      <div class="settings">
+        <div class="setting">
+          <label>方向</label>
+          <select id="vorDir">
+            <option value="lr">左右</option>
+            <option value="ud">上下</option>
+          </select>
+        </div>
+        <div class="setting">
+          <label>タイプ</label>
+          <select id="vorType">
+            <option value="x1">×1(ターゲット固定)</option>
+            <option value="x2">×2(逆方向に動く)</option>
+          </select>
+        </div>
+        <div class="setting">
+          <label>テンポ</label>
+          <select id="vorSpeed">
+            <option value="slow">ゆっくり(40拍/分)</option>
+            <option value="mid" selected>ふつう(60拍/分)</option>
+            <option value="fast">はやい(80拍/分)</option>
+          </select>
+        </div>
+        <div class="setting">
+          <label>時間</label>
+          <select id="vorDur">
+            <option value="30" selected>30秒</option>
+            <option value="60">60秒</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-start" data-mode="vor">▶ VOR訓練をはじめる</button>
+      <p class="note" style="margin-top:8px">※ VOR(特に×2)はめまいを誘発しやすい訓練です。最初は短時間・ゆっくりから始め、症状が強く出る場合は中止してください。</p>
+    </div>
+
+    <div class="card">
+      <div class="mode-head"><span class="mode-icon">📋</span><h2>メニュー(処方プログラム)</h2></div>
+      <p>複数の訓練を組み合わせて、休憩をはさみながら順番に実行します。上の各カードで設定を選んでから「追加」してください。</p>
+      <div class="prog-saved" id="progSaved"></div>
+      <div class="settings" style="align-items:flex-end;margin-bottom:4px">
+        <div class="setting" style="flex:2">
+          <label>追加する訓練(設定は各カードの現在値)</label>
+          <select id="progMode">
+            <option value="pursuit">🌊 追従</option>
+            <option value="saccade">⚡ サッケード</option>
+            <option value="fixation">🎯 固視</option>
+            <option value="search">🔎 視覚探索</option>
+            <option value="scan">📖 読みスキャン</option>
+            <option value="vor">🔄 VOR</option>
+          </select>
+        </div>
+        <button class="btn btn-sub btn-small" id="progAdd">+ 追加</button>
+      </div>
+      <ol class="prog-steps" id="progSteps"></ol>
+      <div class="settings" style="align-items:flex-end">
+        <div class="setting" style="flex:2">
+          <label>プログラム名(保存する場合)</label>
+          <input type="text" id="progName" placeholder="例: 朝のメニュー">
+        </div>
+        <button class="btn btn-sub btn-small" id="progSave">💾 保存</button>
+        <button class="btn btn-accent btn-small" id="progRun">▶ 実行</button>
+        <button class="btn btn-sub btn-small" id="progClear">クリア</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 記録タブ ============ -->
+  <section id="viewLog" style="display:none">
+    <div class="card">
+      <h2>これまでの実施状況</h2>
+      <div class="stat-grid" id="statGrid"></div>
+    </div>
+    <div class="card" id="chartsCard">
+      <h2>スコアの推移</h2>
+      <div id="charts"></div>
+      <p class="note">※ スコアはWebカメラによるおおまかな推定です(視線検出の精度は視角2〜4度程度)。キャリブレーション品質が「低め」の回のスコアは参考程度にしてください。</p>
+    </div>
+    <div class="card">
+      <h2>最近のセッション</h2>
+      <ul class="sess-list" id="sessList"></ul>
+      <div style="margin-top:12px;text-align:right">
+        <button class="btn btn-danger" id="clearData">記録をすべて削除</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    本アプリは眼球運動訓練の補助を目的としたものであり、医療機器ではありません。診断・治療の判断には使用できません。<br>
+    訓練内容は医師・視能訓練士・理学療法士等の指導に従ってください。データはブラウザ内(localStorage)にのみ保存されます。
+  </footer>
+</div>
+
+<!-- ============ 訓練ステージ ============ -->
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <video id="video" playsinline style="display:none"></video>
+  <div class="hud">
+    <span class="pill" id="hudMode"></span>
+    <span class="pill" id="hudStep" style="display:none"></span>
+    <span class="pill" id="hudTime"></span>
+    <span class="grow"></span>
+    <span class="pill" id="hudFace"><span class="face-dot" id="faceDot"></span>顔検出</span>
+    <button class="btn-quit" id="quitBtn">✕ 中止</button>
+  </div>
+  <div class="stage-panel" id="panel"></div>
+  <div id="toast"></div>
+</div>
+
+<script type="module">
+"use strict";
+
+/* ================= 定数・設定 ================= */
+const MP_VER = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+const STORE_KEY = "eyeRehab.v1";
+
+const MODE_INFO = {
+  pursuit:  { name: "追従",        icon: "🌊" },
+  saccade:  { name: "サッケード",  icon: "⚡" },
+  fixation: { name: "固視",        icon: "🎯" },
+  search:   { name: "視覚探索",    icon: "🔎" },
+  scan:     { name: "読みスキャン", icon: "📖" },
+  vor:      { name: "VOR",         icon: "🔄" },
+};
+const NEEDS_CALIB = ["pursuit", "saccade", "fixation", "scan"];
+
+const PUR_PERIOD = { slow: 10, mid: 7, fast: 4.5 };            // 1周の秒数
+const PUR_BOUNCE_V = { slow: 0.10, mid: 0.16, fast: 0.24 };    // ジグザグの速度(画面比/秒)
+const SAC_INTERVAL = { slow: 2.4, mid: 1.9, fast: 1.4 };       // ジャンプ間隔(秒)
+const MEM_MULT = { slow: 1.3, mid: 1, fast: 0.8 };             // 記憶誘導の位相時間倍率
+const SCAN_STEP = { slow: 1.7, mid: 1.3, fast: 1.0 };          // 読みスキャンのステップ間隔(秒)
+const SEARCH_N = { easy: 18, mid: 30, hard: 44 };
+const VOR_BPM = { slow: 40, mid: 60, fast: 80 };
+const HIT_R = 0.15;        // 命中判定半径(画面対角比) — Webカメラ精度に合わせて甘め
+const FIX_R = 0.10;        // 固視の許容半径
+const BLINK_TH = 0.10;     // まばたき判定(眼裂高/眼裂幅)
+const VOR_AMP = { lr: 0.07, ud: 0.045 };  // 頭振りの最小振幅(顔サイズ比)
+const EMOJIS = ["⚽", "🎈", "🐝", "⭐", "🍎"];
+
+const purPatternLabel = { h: "水平", v: "垂直", diag: "斜め", zigzag: "ジグザグ", circle: "円", eight: "8の字" };
+const speedLabel = { slow: "ゆっくり", mid: "ふつう", fast: "はやい", vary: "変化" };
+const sacTaskLabel = { norm: "通常", anti: "アンチ", mem: "記憶誘導" };
+const sacPatternLabel = { h2: "水平2点", v2: "垂直2点", diag: "斜め2点", rand: "ランダム" };
+const searchLevelLabel = { easy: "やさしい", mid: "ふつう", hard: "むずかしい" };
+const vorDirLabel = { lr: "左右", ud: "上下" };
+
+/* ================= DOM ================= */
+const $ = id => document.getElementById(id);
+const stage = $("stage"), cv = $("cv"), ctx = cv.getContext("2d");
+const video = $("video"), panel = $("panel"), toastEl = $("toast");
+const hudMode = $("hudMode"), hudStep = $("hudStep"), hudTime = $("hudTime"), faceDot = $("faceDot");
+
+/* ================= タブ ================= */
+$("tabTrain").addEventListener("click", () => switchTab(true));
+$("tabLog").addEventListener("click", () => switchTab(false));
+function switchTab(train) {
+  $("tabTrain").classList.toggle("active", train);
+  $("tabLog").classList.toggle("active", !train);
+  $("viewTrain").style.display = train ? "" : "none";
+  $("viewLog").style.display = train ? "none" : "";
+  if (!train) renderLog();
+}
+
+/* ================= 保存データ ================= */
+function loadData() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE_KEY)) || {};
+    return { sessions: d.sessions || [], programs: d.programs || [] };
+  } catch { return { sessions: [], programs: [] }; }
+}
+function saveData(d) { localStorage.setItem(STORE_KEY, JSON.stringify(d)); }
+function saveSession(s) {
+  const d = loadData();
+  d.sessions.push(s);
+  saveData(d);
+}
+$("clearData").addEventListener("click", () => {
+  if (confirm("これまでの記録をすべて削除します(保存済みプログラムは残ります)。よろしいですか?")) {
+    const d = loadData();
+    d.sessions = [];
+    saveData(d);
+    renderLog();
+  }
+});
+
+/* ================= 音 ================= */
+let audioCtx = null;
+function beep(freq = 880, dur = 0.08, vol = 0.15) {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.value = freq; o.connect(g); g.connect(audioCtx.destination);
+    g.gain.setValueAtTime(vol, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  } catch { /* 音が出せない環境では無音で続行 */ }
+}
+
+/* ================= MediaPipe / カメラ ================= */
+let landmarker = null, camStream = null;
+let lastFrame = null;   // {feat:{h,v,open}, yaw, pitch, t}
+let faceOk = false;
+
+async function setupTracking() {
+  if (!landmarker) {
+    const vision = await import(MP_VER);
+    const resolver = await vision.FilesetResolver.forVisionTasks(MP_VER + "/wasm");
+    const opts = delegate => ({
+      baseOptions: { modelAssetPath: MODEL_URL, delegate },
+      runningMode: "VIDEO", numFaces: 1,
+    });
+    try { landmarker = await vision.FaceLandmarker.createFromOptions(resolver, opts("GPU")); }
+    catch { landmarker = await vision.FaceLandmarker.createFromOptions(resolver, opts("CPU")); }
+  }
+  camStream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+    audio: false,
+  });
+  video.srcObject = camStream;
+  await video.play();
+}
+function stopCamera() {
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  video.srcObject = null;
+}
+
+/* 虹彩位置 → 視線特徴量。目頭・目尻を基準に虹彩中心の相対位置を取る */
+function extractFeatures(lm) {
+  const eye = (out, inn, up, lo, iris) => {
+    const w = Math.hypot(lm[out].x - lm[inn].x, lm[out].y - lm[inn].y);
+    if (w < 1e-6) return null;
+    const cx = (lm[out].x + lm[inn].x) / 2;
+    const cy = (lm[up].y + lm[lo].y) / 2;
+    return {
+      h: (lm[iris].x - cx) / w,
+      v: (lm[iris].y - cy) / w,
+      open: Math.abs(lm[lo].y - lm[up].y) / w,
+    };
+  };
+  const r = eye(33, 133, 159, 145, 468);   // 右目(画面上は左)
+  const l = eye(263, 362, 386, 374, 473);  // 左目
+  if (!r || !l) return null;
+  return { h: (r.h + l.h) / 2, v: (r.v + l.v) / 2, open: Math.min(r.open, l.open) };
+}
+
+/* 頭のヨー角の代理値: 顔の左右端に対する鼻の位置 */
+function extractYaw(lm) {
+  const R = lm[234], L = lm[454], nose = lm[1];
+  const w = L.x - R.x;
+  if (Math.abs(w) < 1e-6) return 0;
+  return (nose.x - (R.x + L.x) / 2) / w;
+}
+/* 頭のピッチ角の代理値: 額と顎に対する鼻の位置 */
+function extractPitch(lm) {
+  const T = lm[10], C = lm[152], nose = lm[1];
+  const h = C.y - T.y;
+  if (Math.abs(h) < 1e-6) return 0;
+  return (nose.y - (T.y + C.y) / 2) / h;
+}
+
+function analyzeFrame(now) {
+  if (!landmarker || video.readyState < 2) { faceOk = false; return; }
+  let res;
+  try { res = landmarker.detectForVideo(video, now); } catch { faceOk = false; return; }
+  const lm = res.faceLandmarks && res.faceLandmarks[0];
+  if (!lm) { faceOk = false; return; }
+  const feat = extractFeatures(lm);
+  if (!feat) { faceOk = false; return; }
+  faceOk = true;
+  lastFrame = { feat, yaw: extractYaw(lm), pitch: extractPitch(lm), t: now };
+}
+
+/* ================= キャリブレーション(9点) ================= */
+function solve3(M, b) {
+  const A = M.map((row, i) => [...row, b[i]]);
+  for (let c = 0; c < 3; c++) {
+    let p = c;
+    for (let r = c + 1; r < 3; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+    if (Math.abs(A[p][c]) < 1e-12) return null;
+    [A[c], A[p]] = [A[p], A[c]];
+    for (let r = 0; r < 3; r++) {
+      if (r === c) continue;
+      const f = A[r][c] / A[c][c];
+      for (let k = c; k < 4; k++) A[r][k] -= f * A[c][k];
+    }
+  }
+  return [A[0][3] / A[0][0], A[1][3] / A[1][1], A[2][3] / A[2][2]];
+}
+function fitCalibration(samples) {
+  const M = [[0,0,0],[0,0,0],[0,0,0]], bx = [0,0,0], by = [0,0,0];
+  for (const s of samples) {
+    const f = [1, s.h, s.v];
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) M[i][j] += f[i] * f[j];
+      bx[i] += f[i] * s.tx;
+      by[i] += f[i] * s.ty;
+    }
+  }
+  const ax = solve3(M.map(r => [...r]), bx), ay = solve3(M.map(r => [...r]), by);
+  if (!ax || !ay) return null;
+  let se = 0;
+  for (const s of samples) {
+    const px = ax[0] + ax[1] * s.h + ax[2] * s.v;
+    const py = ay[0] + ay[1] * s.h + ay[2] * s.v;
+    se += (px - s.tx) ** 2 + (py - s.ty) ** 2;
+  }
+  const rms = Math.sqrt(se / samples.length);
+  return { ax, ay, rms, quality: rms < 0.09 ? "良好" : rms < 0.16 ? "まずまず" : "低め" };
+}
+const CALIB_PTS = [];
+for (const y of [0.16, 0.5, 0.84]) for (const x of [0.12, 0.5, 0.88]) CALIB_PTS.push({ x, y });
+
+/* ================= 設定の読み取り ================= */
+function readSettings(mode) {
+  switch (mode) {
+    case "pursuit": return {
+      pattern: $("purPattern").value, speed: $("purSpeed").value,
+      dur: +$("purDur").value, blank: $("purBlank").checked,
+    };
+    case "saccade": return {
+      task: $("sacTask").value, pattern: $("sacPattern").value,
+      speed: $("sacSpeed").value, dur: +$("sacDur").value,
+      digits: $("sacDigits").checked && $("sacTask").value === "norm",
+    };
+    case "fixation": return { dur: +$("fixDur").value, distract: $("fixDistract").checked };
+    case "search": return { level: $("schLevel").value, dur: +$("schDur").value };
+    case "scan": return {
+      speed: $("scnSpeed").value, dur: +$("scnDur").value, digits: $("scnDigits").checked,
+    };
+    case "vor": return {
+      dirn: $("vorDir").value, vtype: $("vorType").value,
+      speed: $("vorSpeed").value, dur: +$("vorDur").value,
+    };
+  }
+}
+function describe(mode, cfg) {
+  switch (mode) {
+    case "pursuit": return `${purPatternLabel[cfg.pattern]}・${speedLabel[cfg.speed]}${cfg.blank ? "・消失あり" : ""}`;
+    case "saccade": return `${sacTaskLabel[cfg.task]}・${sacPatternLabel[cfg.pattern]}・${speedLabel[cfg.speed]}${cfg.digits ? "・数字" : ""}`;
+    case "fixation": return cfg.distract ? "妨害あり" : "基本";
+    case "search": return searchLevelLabel[cfg.level];
+    case "scan": return `${speedLabel[cfg.speed]}${cfg.digits ? "・数字" : ""}`;
+    case "vor": return `${vorDirLabel[cfg.dirn]}・${cfg.vtype === "x2" ? "×2" : "×1"}・${speedLabel[cfg.speed]}`;
+  }
+}
+function speedKeyOf(mode, cfg) {
+  return mode === "search" ? cfg.level : (cfg.speed || "");
+}
+
+/* ================= プログラム(処方メニュー) ================= */
+let builderSteps = [];
+$("progAdd").addEventListener("click", () => {
+  const mode = $("progMode").value;
+  builderSteps.push({ mode, cfg: readSettings(mode) });
+  renderBuilder();
+});
+$("progClear").addEventListener("click", () => { builderSteps = []; renderBuilder(); });
+$("progSave").addEventListener("click", () => {
+  const name = $("progName").value.trim();
+  if (!builderSteps.length) { alert("訓練を追加してください"); return; }
+  if (!name) { alert("プログラム名を入力してください"); return; }
+  const d = loadData();
+  d.programs.push({ id: Date.now(), name, steps: builderSteps.map(s => ({ ...s })) });
+  saveData(d);
+  $("progName").value = "";
+  renderPrograms();
+});
+$("progRun").addEventListener("click", () => {
+  if (!builderSteps.length) { alert("訓練を追加してください"); return; }
+  startProgram(builderSteps.map(s => ({ ...s })), $("progName").value.trim() || null);
+});
+function renderBuilder() {
+  const ol = $("progSteps");
+  ol.innerHTML = "";
+  builderSteps.forEach((st, i) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span>${i + 1}. ${MODE_INFO[st.mode].icon} ${MODE_INFO[st.mode].name}
+      <span style="color:var(--muted)">${describe(st.mode, st.cfg)}・${st.cfg.dur}秒</span></span>`;
+    const del = document.createElement("button");
+    del.textContent = "🗑";
+    del.addEventListener("click", () => { builderSteps.splice(i, 1); renderBuilder(); });
+    li.appendChild(del);
+    ol.appendChild(li);
+  });
+}
+function renderPrograms() {
+  const box = $("progSaved");
+  const d = loadData();
+  box.innerHTML = d.programs.length ? "" : "";
+  for (const pg of d.programs) {
+    const row = document.createElement("div");
+    row.className = "prog-row";
+    const stepsTxt = pg.steps.map(s => MODE_INFO[s.mode].icon).join(" ");
+    row.innerHTML = `<span><b>${pg.name}</b> <span class="meta">${stepsTxt}(${pg.steps.length}種目・計${pg.steps.reduce((a, s) => a + s.cfg.dur, 0)}秒)</span></span>`;
+    const btns = document.createElement("span");
+    const run = document.createElement("button");
+    run.className = "btn btn-accent btn-small"; run.textContent = "▶ 実行";
+    run.addEventListener("click", () => startProgram(pg.steps.map(s => ({ ...s })), pg.name));
+    const del = document.createElement("button");
+    del.className = "btn btn-sub btn-small"; del.textContent = "🗑"; del.style.marginLeft = "6px";
+    del.addEventListener("click", () => {
+      const dd = loadData();
+      dd.programs = dd.programs.filter(p => p.id !== pg.id);
+      saveData(dd);
+      renderPrograms();
+    });
+    btns.appendChild(run); btns.appendChild(del);
+    row.appendChild(btns);
+    box.appendChild(row);
+  }
+}
+renderPrograms();
+
+/* ================= 訓練セッション状態 ================= */
+let S = null;
+let rafId = 0, restTimer = 0;
+
+document.querySelectorAll(".btn-start").forEach(btn =>
+  btn.addEventListener("click", () => {
+    const mode = btn.dataset.mode;
+    startProgram([{ mode, cfg: readSettings(mode) }], null);
+  }));
+$("quitBtn").addEventListener("click", closeStage);
+window.addEventListener("keydown", e => {
+  if (e.key === "Escape" && stage.classList.contains("show")) closeStage();
+});
+
+function startProgram(steps, name) {
+  S = {
+    steps, name, idx: 0, results: [],
+    phase: "intro",
+    tracking: false, calib: null,
+    gaze: null, gazeSm: null,
+    emoji: $("optEmoji").checked ? EMOJIS[Math.floor(Math.random() * EMOJIS.length)] : null,
+  };
+  stage.classList.add("show");
+  resizeCanvas();
+  showIntroPanel();
+  loop();
+}
+function closeStage() {
+  cancelAnimationFrame(rafId);
+  clearInterval(restTimer);
+  stopCamera();
+  stage.classList.remove("show");
+  S = null;
+}
+
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = stage.clientWidth * dpr;
+  cv.height = stage.clientHeight * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", () => { if (stage.classList.contains("show")) resizeCanvas(); });
+
+function showToast(msg, ms = 1800) {
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toastEl.classList.remove("show"), ms);
+}
+
+/* ================= パネル ================= */
+function showIntroPanel() {
+  const multi = S.steps.length > 1;
+  const modes = S.steps.map(s => s.mode);
+  const camNeeded = modes.some(m => m !== "search");
+  const onlySearch = !camNeeded;
+  const first = S.steps[0];
+
+  let body;
+  if (multi) {
+    body = `<h2>📋 ${S.name || "メニュー"}(${S.steps.length}種目)</h2>
+      <p>${S.steps.map((s, i) => `${i + 1}. ${MODE_INFO[s.mode].icon} ${MODE_INFO[s.mode].name}(${describe(s.mode, s.cfg)}・${s.cfg.dur}秒)`).join("<br>")}</p>
+      <p>種目の間には休憩をはさみます。</p>`;
+  } else {
+    const m = first.mode;
+    const desc = {
+      pursuit: "動くターゲットを、頭を動かさず目だけで追いかけてください。",
+      saccade: first.cfg.task === "anti"
+        ? "オレンジの印が出たら、<b>印と反対側</b>をすばやく見てください。印を見てしまうと「つられ」になります。"
+        : first.cfg.task === "mem"
+        ? "一瞬光った場所を覚え、中央の点が消えて合図が鳴ったら、<b>覚えた場所</b>を見てください。"
+        : "ジャンプするターゲットへ、できるだけ速く視線を移してください。",
+      fixation: "中央のターゲットを見つめ続けてください。" + (first.cfg.distract ? "周辺に刺激が出ても<b>目を向けない</b>でください。" : ""),
+      search: "たくさんの「●」の中から1つだけある「★」を探して、タップ / クリックしてください。",
+      scan: "左から右へ、上の行から下の行へ、光る場所を順番に目で追ってください。",
+      vor: (first.cfg.dirn === "ud" ? "ターゲットを見つめたまま、合図に合わせて頭を上下にうなずくように振ります。" : "ターゲットを見つめたまま、合図に合わせて頭を左右に振ります。") +
+        (first.cfg.vtype === "x2" ? "<b>×2</b>ではターゲットが頭と反対に動きます。目はターゲットから離さないでください。" : ""),
+    }[m];
+    body = `<div style="font-size:2.5rem">${MODE_INFO[m].icon}</div>
+      <h2>${MODE_INFO[m].name}訓練 <span style="font-size:.85rem;color:#9db8d4">${describe(m, first.cfg)}</span></h2>
+      <p>${desc}</p>`;
+  }
+
+  panel.classList.remove("hidden");
+  panel.innerHTML = `${body}
+    ${camNeeded ? `<p>${NEEDS_CALIB.includes(first.mode) ? "はじめにキャリブレーション(9つの点を目で見つめる)を行います。" : ""}画面から50〜60cm離れ、顔全体が明るく映るようにしてください。</p>` : ""}
+    <div class="btn-row">
+      ${onlySearch
+        ? '<button class="btn btn-start" id="pStart" style="width:auto">▶ 開始する</button>'
+        : `<button class="btn btn-start" id="pStart" style="width:auto">📷 カメラを使って開始</button>
+           <button class="btn btn-sub" id="pNoCam">カメラなしで訓練のみ</button>`}
+    </div>
+    <p class="err" id="pErr"></p>`;
+
+  $("pStart").addEventListener("click", async () => {
+    if (onlySearch) { S.tracking = false; beginStep(0); return; }
+    $("pStart").disabled = true;
+    $("pErr").textContent = "カメラと検出モデルを準備しています…(初回は数十秒かかることがあります)";
+    try {
+      await setupTracking();
+      S.tracking = true;
+      $("pErr").textContent = "";
+      beginStep(0);
+    } catch (e) {
+      $("pStart").disabled = false;
+      $("pErr").textContent = "カメラまたは検出モデルを開始できませんでした(" + (e && e.message ? e.message : e) + ")。「カメラなしで訓練のみ」でも実施できます。";
+    }
+  });
+  const noCam = $("pNoCam");
+  if (noCam) noCam.addEventListener("click", () => { S.tracking = false; beginStep(0); });
+}
+
+/* ---------- ステップ管理 ---------- */
+function beginStep(i) {
+  S.idx = i;
+  const st = S.steps[i];
+  S.mode = st.mode;
+  S.cfg = st.cfg;
+  resetStepFields();
+  hudMode.textContent = `${MODE_INFO[S.mode].icon} ${MODE_INFO[S.mode].name}(${describe(S.mode, S.cfg)})`;
+  hudTime.textContent = `${S.cfg.dur}秒`;
+  hudStep.style.display = S.steps.length > 1 ? "" : "none";
+  hudStep.textContent = `${i + 1} / ${S.steps.length}`;
+  $("hudFace").style.display = (S.tracking && S.mode !== "search") ? "" : "none";
+  panel.classList.add("hidden");
+  if (S.tracking && NEEDS_CALIB.includes(S.mode) && !S.calib) startCalibration();
+  else startCountdown();
+}
+function resetStepFields() {
+  Object.assign(S, {
+    phase: "idle", startT: 0, lastT: 0,
+    gaze: null, gazeSm: null,
+    yawRef: 0, headWarnT: 0,
+    frames: 0, onTarget: 0, errSum: 0,
+    combo: 0, maxCombo: 0, streak: 0, maxStreak: 0,
+    purPhase: 0, bounce: null,
+    trials: [], trial: null, nextTrialT: 0, sacPos: { x: 0.5, y: 0.5 },
+    distract: null,
+    rounds: [], round: null,
+    scanIdx: 0, scanT: 0, scanHits: 0, scanSteps: 0, scanHitFlag: false, scanDigits: null,
+    vor: null, ticks: [], tickIdx: 0, sigRef: 0,
+  });
+}
+
+function startCalibration() {
+  S.phase = "calib";
+  S.calibIdx = 0;
+  S.calibSamples = [];
+  S.calibBuf = [];
+  S.calibPhaseT = performance.now();
+  S.calibRetried = false;
+  showToast("点を目だけで見つめてください(頭は動かさない)", 2500);
+}
+
+function startCountdown() {
+  S.phase = "countdown";
+  S.countStart = performance.now();
+  if (S.tracking && lastFrame) S.yawRef = lastFrame.yaw;
+}
+
+function startRun() {
+  S.phase = "run";
+  S.startT = performance.now();
+  S.lastT = S.startT;
+  const c = S.cfg;
+  if (S.mode === "pursuit" && c.pattern === "zigzag") {
+    const a = 0.5 + Math.random() * 0.6;
+    S.bounce = { x: 0.5, y: 0.5, vx: Math.cos(a), vy: Math.sin(a) * 0.8 };
+  }
+  if (S.mode === "fixation") S.distract = { next: 3 + Math.random() * 2, item: null, caught: 0 };
+  if (S.mode === "search") S.round = genSearchRound(SEARCH_N[c.level]);
+  if (S.mode === "scan") S.scanDigits = genScanDigits();
+  if (S.mode === "vor") {
+    S.vor = { dir: 0, extreme: null, reversals: [], amps: [] };
+    S.ticks = []; S.tickIdx = 0;
+    S.sigRef = vorSignal();
+  }
+  beep(1200, 0.12);
+}
+
+function vorSignal() {
+  if (!lastFrame) return 0;
+  return S.cfg.dirn === "ud" ? lastFrame.pitch : lastFrame.yaw;
+}
+
+/* ================= メインループ ================= */
+function loop() {
+  rafId = requestAnimationFrame(loop);
+  if (!S) return;
+  const now = performance.now();
+  if (S.tracking) analyzeFrame(now);
+  faceDot.classList.toggle("ok", faceOk);
+
+  const w = stage.clientWidth, h = stage.clientHeight;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#0f2138";
+  ctx.fillRect(0, 0, w, h);
+
+  // 視線推定の更新(キャリブ済みのとき)
+  if (S.tracking && S.calib && faceOk && lastFrame && lastFrame.feat.open > BLINK_TH) {
+    const f = lastFrame.feat;
+    const gx = S.calib.ax[0] + S.calib.ax[1] * f.h + S.calib.ax[2] * f.v;
+    const gy = S.calib.ay[0] + S.calib.ay[1] * f.h + S.calib.ay[2] * f.v;
+    const a = 0.35;
+    S.gazeSm = S.gazeSm ? { x: S.gazeSm.x + a * (gx - S.gazeSm.x), y: S.gazeSm.y + a * (gy - S.gazeSm.y) } : { x: gx, y: gy };
+    S.gaze = S.gazeSm;
+  } else if (!faceOk || (lastFrame && lastFrame.feat.open <= BLINK_TH)) {
+    S.gaze = null; // まばたき・顔ロスト中は評価しない
+  }
+
+  if (S.phase === "calib") tickCalib(now, w, h);
+  else if (S.phase === "countdown") tickCountdown(now, w, h);
+  else if (S.phase === "run") tickRun(now, w, h);
+}
+
+/* ---------- キャリブレーション ---------- */
+function tickCalib(now, w, h) {
+  const pt = CALIB_PTS[S.calibIdx];
+  const el = now - S.calibPhaseT;
+  const SETTLE = 800, COLLECT = 1000;
+  const px = pt.x * w, py = pt.y * h;
+
+  const prog = el < SETTLE ? 0 : Math.min(1, (el - SETTLE) / COLLECT);
+  ctx.beginPath(); ctx.arc(px, py, 22 - 10 * prog, 0, Math.PI * 2);
+  ctx.strokeStyle = "#7fd4ff"; ctx.lineWidth = 3; ctx.stroke();
+  ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2);
+  ctx.fillStyle = "#ffffff"; ctx.fill();
+  ctx.fillStyle = "#9db8d4"; ctx.font = "14px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+  ctx.fillText(`キャリブレーション ${S.calibIdx + 1} / ${CALIB_PTS.length}`, w / 2, h - 30);
+
+  if (el >= SETTLE && lastFrame && faceOk && lastFrame.feat.open > BLINK_TH) {
+    S.calibBuf.push({ h: lastFrame.feat.h, v: lastFrame.feat.v });
+  }
+  if (el >= SETTLE + COLLECT) {
+    if (S.calibBuf.length >= 6) {
+      const mh = S.calibBuf.reduce((s, b) => s + b.h, 0) / S.calibBuf.length;
+      const mv = S.calibBuf.reduce((s, b) => s + b.v, 0) / S.calibBuf.length;
+      S.calibSamples.push({ h: mh, v: mv, tx: pt.x, ty: pt.y });
+      S.calibIdx++;
+      S.calibRetried = false;
+      beep(880, 0.05, 0.08);
+    } else if (!S.calibRetried) {
+      S.calibRetried = true;
+      showToast("顔をうまく検出できませんでした。この点をもう一度見つめてください");
+    } else {
+      S.calibIdx++; // 2回失敗した点はスキップ(残りの点で回帰する)
+      S.calibRetried = false;
+    }
+    S.calibBuf = [];
+    S.calibPhaseT = now;
+
+    if (S.calibIdx >= CALIB_PTS.length) {
+      const fit = S.calibSamples.length >= 5 ? fitCalibration(S.calibSamples) : null;
+      if (fit) {
+        S.calib = fit;
+        if (lastFrame) S.yawRef = lastFrame.yaw;
+        showToast(`キャリブレーション完了(品質: ${fit.quality})`, 2200);
+        startCountdown();
+      } else {
+        showToast("キャリブレーションに失敗しました。もう一度行います", 2500);
+        startCalibration();
+      }
+    }
+  }
+}
+
+/* ---------- カウントダウン ---------- */
+const COUNT_HINT = {
+  pursuit: "ターゲットを目だけで追ってください",
+  saccade: "すばやく視線を移してください",
+  fixation: "中央を見つめ続けてください",
+  search: "「★」を見つけてタップ / クリック!",
+  scan: "光る場所を左から右へ順番に",
+  vor: "ターゲットを見たまま、合図に合わせて頭を振ります",
+};
+function tickCountdown(now, w, h) {
+  const remain = 3 - (now - S.countStart) / 1000;
+  if (remain <= 0) { startRun(); return; }
+  ctx.fillStyle = "#ffffff"; ctx.font = "bold 72px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(String(Math.ceil(remain)), w / 2, h / 2);
+  ctx.font = "16px sans-serif"; ctx.fillStyle = "#9db8d4";
+  const hint = S.cfg.task === "anti" ? "印が出たら反対側を見てください"
+    : S.cfg.task === "mem" ? "光った場所を覚えて、合図の後に見てください"
+    : COUNT_HINT[S.mode];
+  ctx.fillText(hint, w / 2, h / 2 + 70);
+  ctx.textBaseline = "alphabetic";
+}
+
+/* ---------- 描画ヘルパー ---------- */
+function drawDot(x, y, r, color) {
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = color; ctx.fill();
+}
+function drawTarget(x, y, opts = {}) {
+  ctx.beginPath(); ctx.arc(x, y, 26, 0, Math.PI * 2);
+  ctx.strokeStyle = opts.color || "#7fd4ff"; ctx.lineWidth = 4; ctx.stroke();
+  if (S.emoji && !opts.digit) {
+    ctx.font = "38px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(S.emoji, x, y + 2);
+    ctx.textBaseline = "alphabetic";
+  } else if (opts.digit != null) {
+    drawDot(x, y, 14, "#ffffff");
+    ctx.fillStyle = "#26374a"; ctx.font = "bold 18px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(String(opts.digit), x, y + 1);
+    ctx.textBaseline = "alphabetic";
+  } else {
+    drawDot(x, y, 9, "#ffffff");
+  }
+}
+function drawMark(p, w, h, ok) {
+  ctx.font = "bold 30px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = ok ? "#7ee2a8" : "#ff9c9c";
+  ctx.fillText(ok ? "○" : "✗", p.x * w, p.y * h);
+  ctx.textBaseline = "alphabetic";
+}
+function drawCombo(w, txt) {
+  ctx.font = "bold 18px sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#ffce7a";
+  ctx.fillText(txt, w / 2, 46);
+}
+function ndist(gz, p, w, h, diag) {
+  return Math.hypot(gz.x * w - p.x * w, gz.y * h - p.y * h) / diag;
+}
+function mirror(p) { return { x: 1 - p.x, y: 1 - p.y }; }
+
+/* ---------- 訓練本体 ---------- */
+function tickRun(now, w, h) {
+  const t = (now - S.startT) / 1000;
+  const dt = Math.min(0.1, (now - S.lastT) / 1000);
+  S.lastT = now;
+  const remain = Math.max(0, S.cfg.dur - t);
+  hudTime.textContent = `残り ${Math.ceil(remain)}秒`;
+  if (remain <= 0) { finishRun(); return; }
+  const diag = Math.hypot(w, h);
+
+  switch (S.mode) {
+    case "pursuit": tickPursuit(now, t, dt, w, h, diag); break;
+    case "saccade": tickSaccade(now, t, dt, w, h, diag); break;
+    case "fixation": tickFixation(now, t, dt, w, h, diag); break;
+    case "search": tickSearch(now, t, w, h, diag); break;
+    case "scan": tickScan(now, t, dt, w, h, diag); break;
+    case "vor": tickVor(now, t, w, h); break;
+  }
+
+  // 視線ドット
+  if ($("optGazeDot").checked && S.gaze && S.mode !== "vor" && S.mode !== "search") {
+    drawDot(S.gaze.x * w, S.gaze.y * h, 10, "rgba(127,212,255,.45)");
+  }
+  // 顔ロスト警告
+  if (S.tracking && !faceOk && S.mode !== "search") {
+    ctx.fillStyle = "#ffc9a3"; ctx.font = "15px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("顔を検出できません — 明るい場所でカメラに顔を向けてください", w / 2, h - 28);
+  }
+}
+
+/* 頭が動いたら注意(目だけで動かす種目) */
+function headCheck(now) {
+  if (S.tracking && lastFrame && faceOk &&
+      Math.abs(lastFrame.yaw - S.yawRef) > 0.13 && now - S.headWarnT > 4000) {
+    S.headWarnT = now;
+    showToast("頭は動かさず、目だけで追いましょう");
+  }
+}
+
+/* ---- 追従 ---- */
+function pursuitTarget(t, dt) {
+  const c = S.cfg;
+  const factor = c.speed === "vary" ? 1 + 0.55 * Math.sin(2 * Math.PI * t / 9) : 1;
+  if (c.pattern === "zigzag") {
+    const v = (c.speed === "vary" ? PUR_BOUNCE_V.mid : PUR_BOUNCE_V[c.speed]) * factor;
+    const b = S.bounce;
+    b.x += b.vx * v * dt; b.y += b.vy * v * dt;
+    if (b.x < 0.12) { b.x = 0.12; b.vx = Math.abs(b.vx); }
+    if (b.x > 0.88) { b.x = 0.88; b.vx = -Math.abs(b.vx); }
+    if (b.y < 0.16) { b.y = 0.16; b.vy = Math.abs(b.vy); }
+    if (b.y > 0.84) { b.y = 0.84; b.vy = -Math.abs(b.vy); }
+    return { x: b.x, y: b.y };
+  }
+  const T = c.speed === "vary" ? PUR_PERIOD.mid : PUR_PERIOD[c.speed];
+  S.purPhase += dt * 2 * Math.PI / T * factor;
+  const ph = S.purPhase, ax = 0.38, ay = 0.32;
+  switch (c.pattern) {
+    case "h":      return { x: 0.5 + ax * Math.sin(ph), y: 0.5 };
+    case "v":      return { x: 0.5, y: 0.5 + ay * Math.sin(ph) };
+    case "diag":   return { x: 0.5 + ax * Math.sin(ph), y: 0.5 + ay * Math.sin(ph) };
+    case "circle": return { x: 0.5 + ax * Math.cos(ph), y: 0.5 + ay * Math.sin(ph) };
+    case "eight":  return { x: 0.5 + ax * Math.sin(ph), y: 0.5 + ay * Math.sin(2 * ph) };
+  }
+}
+function tickPursuit(now, t, dt, w, h, diag) {
+  const target = pursuitTarget(t, dt);
+  const visible = !(S.cfg.blank && (t % 3) > 2.35); // 3秒ごとに0.65秒消える
+  if (visible) drawTarget(target.x * w, target.y * h);
+
+  if (S.tracking && S.gaze && visible) {
+    const dist = ndist(S.gaze, target, w, h, diag);
+    S.frames++;
+    S.errSum += dist;
+    if (dist < HIT_R) {
+      S.onTarget++;
+      S.combo += dt;
+      S.maxCombo = Math.max(S.maxCombo, S.combo);
+    } else S.combo = 0;
+    headCheck(now);
+  }
+  if (S.combo > 1.5) drawCombo(w, `🔥 ${S.combo.toFixed(1)}秒 連続追従中`);
+}
+
+/* ---- サッケード(通常・アンチ・記憶誘導) ---- */
+const SAC_GRID = [];
+for (const y of [0.2, 0.5, 0.8]) for (const x of [0.14, 0.5, 0.86]) SAC_GRID.push({ x, y });
+function nextSacPos() {
+  const c = S.cfg;
+  if (c.pattern === "h2") return { x: S.sacPos.x < 0.5 ? 0.87 : 0.13, y: 0.5 };
+  if (c.pattern === "v2") return { x: 0.5, y: S.sacPos.y < 0.5 ? 0.85 : 0.15 };
+  if (c.pattern === "diag") return S.sacPos.x < 0.5 ? { x: 0.85, y: 0.82 } : { x: 0.15, y: 0.18 };
+  let next;
+  do { next = SAC_GRID[Math.floor(Math.random() * SAC_GRID.length)]; }
+  while (Math.hypot(next.x - S.sacPos.x, next.y - S.sacPos.y) < 0.25);
+  return next;
+}
+
+function tickSaccade(now, t, dt, w, h, diag) {
+  const c = S.cfg;
+  if (c.task === "mem") { tickMemSaccade(now, w, h, diag); return; }
+  if (c.task === "anti") { tickAntiSaccade(now, w, h, diag); return; }
+
+  // --- 通常 ---
+  if (t >= S.nextTrialT) {
+    if (S.trial && S.trial.rt == null) { S.trial.miss = true; S.streak = 0; }
+    const p = nextSacPos();
+    S.sacPos = p;
+    S.trial = { p, jumpT: now, rt: null, miss: false, digit: c.digits ? Math.floor(Math.random() * 10) : null };
+    S.trials.push(S.trial);
+    S.nextTrialT = t + SAC_INTERVAL[c.speed] * (0.85 + Math.random() * 0.3);
+    beep(660, 0.04, 0.06);
+  }
+  const tr = S.trial;
+  if (tr) drawTarget(tr.p.x * w, tr.p.y * h, { color: "#ffb066", digit: tr.digit });
+
+  if (S.tracking && S.gaze && tr && tr.rt == null) {
+    if (ndist(S.gaze, tr.p, w, h, diag) < HIT_R) {
+      tr.rt = now - tr.jumpT;
+      S.streak++;
+      S.maxStreak = Math.max(S.maxStreak, S.streak);
+    }
+    headCheck(now);
+  }
+  if (S.streak >= 2) drawCombo(w, `🔥 ${S.streak}連続ヒット`);
+}
+
+/* アンチサッケード: 中央復帰 → 印提示 → 反対側を見る */
+function tickAntiSaccade(now, w, h, diag) {
+  const c = S.cfg;
+  if (!S.trial) newAntiTrial(now);
+  const tr = S.trial;
+  const el = now - tr.phaseT;
+  const center = { x: 0.5, y: 0.5 };
+
+  drawDot(w / 2, h / 2, 6, "#9db8d4"); // 中央アンカー
+
+  if (tr.phase === "center") {
+    // 視線が中央に戻る(またはタイムアウト)まで待つ
+    const back = !S.tracking || !S.gaze || ndist(S.gaze, center, w, h, diag) < HIT_R;
+    if ((back && el > 500) || el > 2000) {
+      tr.phase = "cue"; tr.phaseT = now; tr.cueT = now;
+      beep(660, 0.04, 0.06);
+    }
+  } else if (tr.phase === "cue") {
+    drawDot(tr.p.x * w, tr.p.y * h, 16, "#ff8c42"); // 印(オレンジ)
+    if (S.tracking && S.gaze && tr.result == null && el > 80) {
+      if (ndist(S.gaze, tr.p, w, h, diag) < HIT_R) {
+        tr.result = "error"; S.streak = 0; beep(220, 0.1, 0.08);
+      } else if (ndist(S.gaze, tr.m, w, h, diag) < HIT_R) {
+        tr.result = "correct"; tr.rt = now - tr.cueT;
+        S.streak++; S.maxStreak = Math.max(S.maxStreak, S.streak);
+      }
+    }
+    const limit = SAC_INTERVAL[c.speed] * 1000 + 600;
+    if (tr.result || el > limit) {
+      if (!tr.result) { tr.result = "miss"; S.streak = 0; }
+      tr.phase = "fb"; tr.phaseT = now;
+    }
+  } else { // fb
+    drawDot(tr.p.x * w, tr.p.y * h, 12, "rgba(255,140,66,.4)");
+    if (tr.result === "correct") drawMark(tr.m, w, h, true);
+    if (tr.result === "error") drawMark(tr.p, w, h, false);
+    if (el > 450) newAntiTrial(now);
+  }
+  if (S.streak >= 2) drawCombo(w, `🔥 ${S.streak}連続正答`);
+}
+function newAntiTrial(now) {
+  const p = nextSacPos();
+  S.sacPos = p;
+  S.trial = { p, m: mirror(p), phase: "center", phaseT: now, cueT: 0, result: null, rt: null };
+  S.trials.push(S.trial);
+}
+
+/* 記憶誘導サッケード: 固視 → 一瞬提示 → 遅延 → 合図で想起 */
+function tickMemSaccade(now, w, h, diag) {
+  const mult = MEM_MULT[S.cfg.speed];
+  if (!S.trial) newMemTrial(now);
+  const tr = S.trial;
+  const el = now - tr.phaseT;
+  const durs = { fix: 700 * mult, flash: 300, delay: 900 * mult, go: 1300, fb: 500 };
+
+  if (tr.phase === "fix") {
+    drawDot(w / 2, h / 2, 8, "#ffffff");
+    if (el > durs.fix) { tr.phase = "flash"; tr.phaseT = now; }
+  } else if (tr.phase === "flash") {
+    drawDot(w / 2, h / 2, 8, "#ffffff");
+    drawTarget(tr.p.x * w, tr.p.y * h, { color: "#ffe07a" });
+    if (el > durs.flash) { tr.phase = "delay"; tr.phaseT = now; }
+  } else if (tr.phase === "delay") {
+    drawDot(w / 2, h / 2, 8, "#ffffff");
+    if (el > durs.delay) { tr.phase = "go"; tr.phaseT = now; tr.goT = now; beep(980, 0.08, 0.14); }
+  } else if (tr.phase === "go") {
+    // 何も表示しない: 覚えた場所を見る
+    if (S.tracking && S.gaze && tr.result == null) {
+      if (ndist(S.gaze, tr.p, w, h, diag) < HIT_R) {
+        tr.result = "hit"; tr.rt = now - tr.goT;
+        S.streak++; S.maxStreak = Math.max(S.maxStreak, S.streak);
+      }
+    }
+    if (tr.result || el > durs.go) {
+      if (!tr.result) { tr.result = "miss"; S.streak = 0; }
+      tr.phase = "fb"; tr.phaseT = now;
+    }
+  } else { // fb: 正解位置を表示
+    drawTarget(tr.p.x * w, tr.p.y * h);
+    drawMark({ x: tr.p.x, y: tr.p.y - 0.07 }, w, h, tr.result === "hit");
+    if (el > durs.fb) newMemTrial(now);
+  }
+  if (S.streak >= 2) drawCombo(w, `🔥 ${S.streak}連続ヒット`);
+}
+function newMemTrial(now) {
+  const p = nextSacPos();
+  S.sacPos = p;
+  S.trial = { p, phase: "fix", phaseT: now, goT: 0, result: null, rt: null };
+  S.trials.push(S.trial);
+}
+
+/* ---- 固視 ---- */
+function tickFixation(now, t, dt, w, h, diag) {
+  const center = { x: 0.5, y: 0.5 };
+  drawTarget(w / 2, h / 2);
+
+  const D = S.distract;
+  if (S.cfg.distract) {
+    if (!D.item && t > D.next) {
+      const ang = Math.random() * Math.PI * 2;
+      const r = 0.3 + Math.random() * 0.12;
+      D.item = {
+        p: { x: 0.5 + Math.cos(ang) * r * 0.9, y: 0.5 + Math.sin(ang) * r * 0.75 },
+        t0: now, caught: false,
+      };
+    }
+    if (D.item) {
+      const it = D.item;
+      drawDot(it.p.x * w, it.p.y * h, 13, it.caught ? "#ff9c9c" : "#ff8c42");
+      if (!it.caught && S.tracking && S.gaze && ndist(S.gaze, it.p, w, h, diag) < HIT_R * 0.9) {
+        it.caught = true;
+        D.caught++;
+        S.combo = 0;
+        beep(220, 0.1, 0.08);
+        showToast("つられました!中央を見続けましょう");
+      }
+      if (now - it.t0 > 1100) { D.item = null; D.next = t + 3 + Math.random() * 2.5; }
+    }
+  }
+
+  if (S.tracking && S.gaze) {
+    const dist = ndist(S.gaze, center, w, h, diag);
+    S.frames++;
+    S.errSum += dist;
+    if (dist < FIX_R) {
+      S.onTarget++;
+      S.combo += dt;
+      S.maxCombo = Math.max(S.maxCombo, S.combo);
+    } else S.combo = 0;
+    headCheck(now);
+  }
+  if (S.combo > 2) drawCombo(w, `🔥 ${S.combo.toFixed(1)}秒 固視キープ中`);
+}
+
+/* ---- 視覚探索 ---- */
+function genSearchRound(n) {
+  const items = [];
+  let guard = 0;
+  while (items.length < n && guard < 3000) {
+    guard++;
+    const p = { x: 0.06 + Math.random() * 0.88, y: 0.13 + Math.random() * 0.78 };
+    if (items.every(q => Math.hypot(q.x - p.x, q.y - p.y) > 0.062)) items.push(p);
+  }
+  return { items, ti: Math.floor(Math.random() * items.length), startT: performance.now(), missClicks: 0 };
+}
+function tickSearch(now, t, w, h, diag) {
+  const r = S.round;
+  if (!r) return;
+  ctx.font = "26px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  r.items.forEach((p, i) => {
+    ctx.fillStyle = "#8fa9c9";
+    ctx.fillText(i === r.ti ? "★" : "●", p.x * w, p.y * h);
+  });
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "#9db8d4"; ctx.font = "14px sans-serif";
+  ctx.fillText(`みつけた数: ${S.rounds.filter(x => x.found).length}`, w / 2, h - 26);
+
+  if (now - r.startT > 15000) { // 15秒でタイムアウト
+    S.rounds.push({ found: false, time: 15, missClicks: r.missClicks });
+    S.streak = 0;
+    S.round = genSearchRound(SEARCH_N[S.cfg.level]);
+    showToast("時間切れ!次を探しましょう");
+  }
+  if (S.streak >= 2) drawCombo(w, `🔥 ${S.streak}連続発見`);
+}
+cv.addEventListener("click", e => {
+  if (!S || S.phase !== "run" || S.mode !== "search" || !S.round) return;
+  const rect = cv.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
+  const r = S.round;
+  const tp = r.items[r.ti];
+  const w = rect.width, h = rect.height;
+  if (Math.hypot((x - tp.x) * w, (y - tp.y) * h) < 30) {
+    const time = (performance.now() - r.startT) / 1000;
+    S.rounds.push({ found: true, time, missClicks: r.missClicks });
+    S.streak++;
+    S.maxStreak = Math.max(S.maxStreak, S.streak);
+    beep(1100, 0.09, 0.12);
+    S.round = genSearchRound(SEARCH_N[S.cfg.level]);
+  } else {
+    r.missClicks++;
+    beep(300, 0.06, 0.06);
+  }
+});
+
+/* ---- 読みスキャン ---- */
+const SCAN_COLS = 6, SCAN_ROWS = 4;
+function scanPos(idx) {
+  const col = idx % SCAN_COLS, row = Math.floor(idx / SCAN_COLS) % SCAN_ROWS;
+  return { x: 0.12 + 0.152 * col, y: 0.2 + 0.2 * row };
+}
+function genScanDigits() {
+  return Array.from({ length: SCAN_COLS * SCAN_ROWS }, () => Math.floor(Math.random() * 10));
+}
+function tickScan(now, t, dt, w, h, diag) {
+  const step = SCAN_STEP[S.cfg.speed];
+  S.scanT += dt;
+  if (S.scanT >= step) {
+    S.scanT -= step;
+    // ステップ確定
+    S.scanSteps++;
+    if (!S.tracking) { /* 訓練のみ */ }
+    else if (S.scanHitFlag) {
+      S.scanHits++; S.streak++;
+      S.maxStreak = Math.max(S.maxStreak, S.streak);
+    } else S.streak = 0;
+    S.scanHitFlag = false;
+    S.scanIdx++;
+    if (S.scanIdx % (SCAN_COLS * SCAN_ROWS) === 0) S.scanDigits = genScanDigits();
+    beep(700, 0.03, 0.05);
+  }
+  const cur = scanPos(S.scanIdx);
+
+  // 数字グリッド or 現在位置のみ
+  if (S.cfg.digits) {
+    ctx.font = "24px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for (let i = 0; i < SCAN_COLS * SCAN_ROWS; i++) {
+      const p = scanPos(i);
+      ctx.fillStyle = "#5a7494";
+      ctx.fillText(String(S.scanDigits[i % S.scanDigits.length]), p.x * w, p.y * h);
+    }
+    ctx.textBaseline = "alphabetic";
+    ctx.beginPath(); ctx.arc(cur.x * w, cur.y * h, 24, 0, Math.PI * 2);
+    ctx.strokeStyle = "#7fd4ff"; ctx.lineWidth = 4; ctx.stroke();
+  } else {
+    drawTarget(cur.x * w, cur.y * h);
+  }
+
+  if (S.tracking && S.gaze) {
+    if (ndist(S.gaze, cur, w, h, diag) < HIT_R) S.scanHitFlag = true;
+    headCheck(now);
+  }
+  if (S.streak >= 3) drawCombo(w, `🔥 ${S.streak}マス連続`);
+}
+
+/* ---- VOR ---- */
+function tickVor(now, t, w, h) {
+  const c = S.cfg;
+  const interval = 60 / VOR_BPM[c.speed];
+  const tickN = Math.floor(t / interval);
+  if (tickN > S.tickIdx - 1) {
+    S.tickIdx = tickN + 1;
+    S.ticks.push({ t: now, matched: false });
+    beep(S.tickIdx % 2 ? 740 : 560, 0.07, 0.14);
+  }
+
+  // 頭を向けるべき方向の矢印
+  const side = S.tickIdx % 2 ? 1 : -1;
+  ctx.font = "bold 44px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgba(255,176,102,.9)";
+  if (c.dirn === "ud") {
+    ctx.fillText(side > 0 ? "▼" : "▲", w / 2, h / 2 + side * Math.min(h * 0.26, 180));
+  } else {
+    ctx.fillText(side > 0 ? "▶" : "◀", w / 2 + side * Math.min(w * 0.28, 220), h / 2);
+  }
+  ctx.textBaseline = "alphabetic";
+
+  // 頭部の切り返し検出 + ×2のターゲット移動
+  let sig = 0;
+  const target = { x: 0.5, y: 0.5 };
+  if (lastFrame && faceOk) {
+    sig = vorSignal() - S.sigRef;
+    const AMP = VOR_AMP[c.dirn];
+    const v = S.vor;
+    if (v.extreme === null) v.extreme = sig;
+    if (v.dir >= 0 && sig > v.extreme) v.extreme = sig;
+    if (v.dir <= 0 && sig < v.extreme) v.extreme = sig;
+    if (v.dir >= 0 && v.extreme - sig > AMP) {
+      v.reversals.push(now); v.amps.push(Math.abs(v.extreme)); v.dir = -1; v.extreme = sig;
+    } else if (v.dir <= 0 && sig - v.extreme > AMP) {
+      v.reversals.push(now); v.amps.push(Math.abs(v.extreme)); v.dir = 1; v.extreme = sig;
+    }
+    for (const tk of S.ticks) {
+      if (tk.matched) continue;
+      if (v.reversals.some(r => Math.abs(r - tk.t) < interval * 450)) tk.matched = true;
+    }
+    // 頭の動きゲージ
+    const norm = Math.max(-1, Math.min(1, sig / (VOR_AMP[c.dirn] * 3.5)));
+    if (c.dirn === "ud") drawDot(w / 2 + Math.min(w * 0.24, 180), h / 2 + norm * Math.min(h * 0.22, 150), 8, "rgba(127,212,255,.6)");
+    else drawDot(w / 2 + norm * Math.min(w * 0.3, 240), h / 2 + Math.min(h * 0.18, 120), 8, "rgba(127,212,255,.6)");
+
+    // ×2: ターゲットが頭と反対方向に動く
+    if (c.vtype === "x2") {
+      if (c.dirn === "ud") target.y = 0.5 - Math.max(-0.22, Math.min(0.22, sig * 1.8));
+      else target.x = 0.5 - Math.max(-0.27, Math.min(0.27, sig * 1.3));
+    }
+  }
+  drawTarget(target.x * w, target.y * h);
+}
+
+/* ---------- 終了・スコア ---------- */
+function median(arr) {
+  if (!arr.length) return null;
+  const a = [...arr].sort((x, y) => x - y);
+  return a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2;
+}
+function rtScore(rt, base, span) {
+  return rt == null ? 0 : Math.max(0, Math.min(1, 1 - (rt - base) / span));
+}
+
+function computeResult() {
+  const c = S.cfg;
+  let score = null, detail = "", metrics = {};
+
+  if (S.mode === "pursuit") {
+    if (S.tracking && S.frames > 30) {
+      score = Math.round(100 * S.onTarget / S.frames);
+      const meanErr = S.errSum / S.frames;
+      metrics = { onTargetPct: score, meanErr: +meanErr.toFixed(3), maxCombo: +S.maxCombo.toFixed(1) };
+      detail = `追従率 ${score}% / 平均ずれ ${(meanErr * 100).toFixed(1)}(画面対角比%)/ 最長連続 ${S.maxCombo.toFixed(1)}秒`;
+    } else detail = "トラッキングなしで実施しました(スコアなし)";
+
+  } else if (S.mode === "saccade") {
+    const done = S.trials.filter(tr => tr.result != null || tr.rt != null || tr.miss);
+    if (!S.tracking || done.length < 3) {
+      detail = "トラッキングなしで実施しました(スコアなし)";
+    } else if (c.task === "anti") {
+      const decided = S.trials.filter(tr => tr.result);
+      const correct = decided.filter(tr => tr.result === "correct");
+      const errors = decided.filter(tr => tr.result === "error");
+      const cr = decided.length ? correct.length / decided.length : 0;
+      const rtMed = median(correct.map(tr => tr.rt));
+      score = Math.round(70 * cr + 30 * rtScore(rtMed, 450, 800));
+      metrics = { correct: correct.length, total: decided.length, errors: errors.length, medianRT: rtMed ? Math.round(rtMed) : null };
+      detail = `正答 ${correct.length} / ${decided.length} 回(つられ ${errors.length}回)` + (rtMed ? ` / 反応 ${Math.round(rtMed)}ms` : "");
+    } else if (c.task === "mem") {
+      const decided = S.trials.filter(tr => tr.result);
+      const hits = decided.filter(tr => tr.result === "hit");
+      const hr = decided.length ? hits.length / decided.length : 0;
+      const rtMed = median(hits.map(tr => tr.rt));
+      score = Math.round(75 * hr + 25 * rtScore(rtMed, 350, 800));
+      metrics = { hits: hits.length, total: decided.length, medianRT: rtMed ? Math.round(rtMed) : null };
+      detail = `想起成功 ${hits.length} / ${decided.length} 回` + (rtMed ? ` / 反応 ${Math.round(rtMed)}ms` : "");
+    } else {
+      const jumps = S.trials.filter(tr => performance.now() - tr.jumpT > 200);
+      const hits = jumps.filter(tr => tr.rt != null);
+      const hitRate = jumps.length ? hits.length / jumps.length : 0;
+      const rtMed = median(hits.map(tr => tr.rt));
+      score = Math.round(70 * hitRate + 30 * rtScore(rtMed, 300, 800));
+      metrics = { hits: hits.length, total: jumps.length, medianRT: rtMed ? Math.round(rtMed) : null, maxStreak: S.maxStreak };
+      detail = `命中 ${hits.length} / ${jumps.length} 回` + (rtMed ? ` / 反応時間の中央値 ${Math.round(rtMed)}ms` : "");
+    }
+
+  } else if (S.mode === "fixation") {
+    if (S.tracking && S.frames > 30) {
+      const stay = Math.round(100 * S.onTarget / S.frames);
+      const caught = S.cfg.distract ? S.distract.caught : 0;
+      score = Math.max(0, stay - 5 * caught);
+      metrics = { stayPct: stay, distracted: caught, maxCombo: +S.maxCombo.toFixed(1) };
+      detail = `固視維持 ${stay}%` + (S.cfg.distract ? ` / つられ ${caught}回(−${5 * caught}点)` : "") + ` / 最長キープ ${S.maxCombo.toFixed(1)}秒`;
+    } else detail = "トラッキングなしで実施しました(スコアなし)";
+
+  } else if (S.mode === "search") {
+    const rounds = S.rounds;
+    if (rounds.length >= 2) {
+      const found = rounds.filter(r => r.found);
+      const fr = found.length / rounds.length;
+      const avg = found.length ? found.reduce((a, r) => a + r.time, 0) / found.length : null;
+      const par = 2 + SEARCH_N[c.level] * 0.12;
+      const sp = avg == null ? 0 : Math.max(0, Math.min(1, par / avg));
+      score = Math.round(60 * fr + 40 * sp);
+      metrics = { found: found.length, rounds: rounds.length, avgTime: avg ? +avg.toFixed(1) : null };
+      detail = `発見 ${found.length} / ${rounds.length} 回` + (avg ? ` / 平均 ${avg.toFixed(1)}秒` : "");
+    } else detail = "ラウンド数が足りませんでした(2回以上探してみましょう)";
+
+  } else if (S.mode === "scan") {
+    if (S.tracking && S.scanSteps >= 5) {
+      score = Math.round(100 * S.scanHits / S.scanSteps);
+      metrics = { hits: S.scanHits, steps: S.scanSteps, maxStreak: S.maxStreak };
+      detail = `追跡できたマス ${S.scanHits} / ${S.scanSteps}`;
+    } else detail = "トラッキングなしで実施しました(スコアなし)";
+
+  } else { // vor
+    const ticks = S.ticks.slice(2);
+    if (S.tracking && ticks.length >= 3) {
+      const rhythm = ticks.filter(tk => tk.matched).length / ticks.length;
+      const amps = S.vor.amps;
+      const meanAmp = amps.length ? amps.reduce((a, b) => a + b, 0) / amps.length : 0;
+      const ampScore = Math.max(0, Math.min(1, meanAmp / (VOR_AMP[c.dirn] * 2.2)));
+      score = Math.round(70 * rhythm + 30 * ampScore);
+      metrics = { rhythmPct: Math.round(rhythm * 100), cycles: Math.floor(S.vor.reversals.length / 2) };
+      detail = `リズム一致 ${Math.round(rhythm * 100)}% / 往復 約${Math.floor(S.vor.reversals.length / 2)}回`;
+    } else detail = S.tracking ? "頭の動きを十分に検出できませんでした" : "カメラなしで実施しました(スコアなし)";
+  }
+  return { score, detail, metrics };
+}
+
+/* 難易度アップの提案: 同モード・同レベルで3回連続80点以上 */
+function difficultySuggestion(sess) {
+  if (sess.score == null || sess.score < 80) return "";
+  const NEXT_SEARCH = { easy: "mid", mid: "hard" };
+  const key = sess.speedKey;
+  const next = sess.mode === "search" ? NEXT_SEARCH[key] : (key === "slow" ? "mid" : key === "mid" ? "fast" : null);
+  if (!next) return "";
+  const d = loadData();
+  const same = d.sessions.filter(s => s.mode === sess.mode && s.speedKey === key && s.score != null);
+  const last3 = same.slice(-3);
+  if (last3.length < 3 || !last3.every(s => s.score >= 80)) return "";
+  const label = sess.mode === "search" ? searchLevelLabel[next] : speedLabel[next];
+  return `🎉 このレベルで3回連続80点以上!次は「${label}」に挑戦してみましょう`;
+}
+
+function finishRun() {
+  S.phase = "done";
+  beep(1000, 0.15); setTimeout(() => beep(1400, 0.2), 160);
+
+  const { score, detail, metrics } = computeResult();
+  const sess = {
+    ts: Date.now(),
+    mode: S.mode,
+    label: describe(S.mode, S.cfg),
+    speedKey: speedKeyOf(S.mode, S.cfg),
+    dur: S.cfg.dur,
+    score, metrics,
+    calib: NEEDS_CALIB.includes(S.mode) ? (S.calib ? S.calib.quality : "なし") : "—",
+    program: S.name || null,
+  };
+  saveSession(sess);
+  const suggest = difficultySuggestion(sess);
+  S.results.push({ mode: S.mode, label: sess.label, score, detail });
+
+  if (S.idx < S.steps.length - 1) showRestPanel();
+  else if (S.steps.length > 1) showSummaryPanel();
+  else showResultPanel(score, detail, suggest);
+}
+
+function showResultPanel(score, detail, suggest) {
+  panel.classList.remove("hidden");
+  panel.innerHTML = `
+    <div style="font-size:2.4rem">🎉</div>
+    <h2>おつかれさまでした!</h2>
+    ${score != null ? `<div class="score-big">${score}<span style="font-size:1.2rem"> 点</span></div>` : `<div class="big" style="font-size:1.6rem">実施完了</div>`}
+    <p>${detail}${S.calib ? `<br>キャリブレーション品質: ${S.calib.quality}` : ""}</p>
+    ${suggest ? `<p class="suggest">${suggest}</p>` : ""}
+    <p style="color:#ffd9b8">👀 目を閉じるか遠くを見て、<b>30秒ほど休憩</b>してから次を行いましょう。</p>
+    <div class="btn-row">
+      <button class="btn btn-accent" id="pAgain">もう一度</button>
+      <button class="btn btn-sub" id="pClose">終了する</button>
+    </div>`;
+  $("pAgain").addEventListener("click", () => {
+    S.results = [];
+    beginStep(0); // キャリブレーションは保持したまま再開
+  });
+  $("pClose").addEventListener("click", closeStage);
+}
+
+function showRestPanel() {
+  const nextStep = S.steps[S.idx + 1];
+  const last = S.results[S.results.length - 1];
+  let rest = 20;
+  panel.classList.remove("hidden");
+  panel.innerHTML = `
+    <h2>${MODE_INFO[S.mode].icon} ${MODE_INFO[S.mode].name} おわり!</h2>
+    ${last.score != null ? `<div class="score-big">${last.score}<span style="font-size:1.2rem"> 点</span></div>` : ""}
+    <p>${last.detail}</p>
+    <p style="color:#ffd9b8">目を休めましょう。次は <b>${MODE_INFO[nextStep.mode].icon} ${MODE_INFO[nextStep.mode].name}(${describe(nextStep.mode, nextStep.cfg)})</b></p>
+    <div class="big" id="restCount" style="font-size:2rem">${rest}</div>
+    <div class="btn-row">
+      <button class="btn btn-accent" id="pSkip">▶ すぐ次へ</button>
+      <button class="btn btn-sub" id="pAbort">終了する</button>
+    </div>`;
+  clearInterval(restTimer);
+  restTimer = setInterval(() => {
+    rest--;
+    const el = $("restCount");
+    if (el) el.textContent = String(rest);
+    if (rest <= 0) { clearInterval(restTimer); beginStep(S.idx + 1); }
+  }, 1000);
+  $("pSkip").addEventListener("click", () => { clearInterval(restTimer); beginStep(S.idx + 1); });
+  $("pAbort").addEventListener("click", () => { clearInterval(restTimer); showSummaryPanel(); });
+}
+
+function showSummaryPanel() {
+  panel.classList.remove("hidden");
+  const rows = S.results.map((r, i) =>
+    `<li>${i + 1}. ${MODE_INFO[r.mode].icon} ${MODE_INFO[r.mode].name}(${r.label})
+     — <b>${r.score != null ? r.score + "点" : "実施"}</b></li>`).join("");
+  panel.innerHTML = `
+    <div style="font-size:2.4rem">🏅</div>
+    <h2>${S.name || "メニュー"} おつかれさまでした!</h2>
+    <ul class="summary">${rows}</ul>
+    <p style="color:#ffd9b8">👀 しっかり目を休めましょう。</p>
+    <div class="btn-row">
+      <button class="btn btn-sub" id="pClose">閉じる</button>
+    </div>`;
+  $("pClose").addEventListener("click", closeStage);
+}
+
+/* ================= 記録タブ描画 ================= */
+function fmtDate(ts) {
+  const d = new Date(ts);
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function renderLog() {
+  const data = loadData();
+  const ss = data.sessions;
+
+  const days = new Set(ss.map(s => new Date(s.ts).toDateString())).size;
+  const totalMin = Math.round(ss.reduce((a, s) => a + (s.dur || 0), 0) / 60 * 10) / 10;
+  $("statGrid").innerHTML = `
+    <div class="stat"><div class="num">${ss.length}</div><div class="lbl">総セッション</div></div>
+    <div class="stat"><div class="num">${days}</div><div class="lbl">実施日数</div></div>
+    <div class="stat"><div class="num">${totalMin}</div><div class="lbl">累計(分)</div></div>`;
+
+  // モード別チャート(スコアのある種目のみ)
+  const charts = $("charts");
+  charts.innerHTML = "";
+  let any = false;
+  for (const mode of Object.keys(MODE_INFO)) {
+    const scored = ss.filter(s => s.mode === mode && s.score != null).slice(-15);
+    if (!scored.length) continue;
+    any = true;
+    const div = document.createElement("div");
+    div.style.marginBottom = "14px";
+    const W = 640, H = 120, pad = 26;
+    const n = scored.length;
+    const px = i => pad + (n === 1 ? (W - 2 * pad) / 2 : (W - 2 * pad) * i / (n - 1));
+    const py = v => H - pad / 2 - (H - pad * 1.5) * v / 100;
+    const pts = scored.map((s, i) => `${px(i)},${py(s.score)}`).join(" ");
+    const dots = scored.map((s, i) =>
+      `<circle cx="${px(i)}" cy="${py(s.score)}" r="4" fill="#2b7de9"/>` +
+      `<text x="${px(i)}" y="${py(s.score) - 8}" font-size="10" text-anchor="middle" fill="#7d8b9c">${s.score}</text>`).join("");
+    const last = scored[scored.length - 1].score;
+    const best = Math.max(...scored.map(s => s.score));
+    div.innerHTML = `
+      <div style="font-size:.82rem;font-weight:700;margin-bottom:4px">${MODE_INFO[mode].icon} ${MODE_INFO[mode].name}
+        <span style="color:var(--muted);font-weight:400">最新 ${last}点 / ベスト ${best}点</span></div>
+      <div class="chart-box"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:320px">
+        <line x1="${pad}" y1="${py(0)}" x2="${W - pad}" y2="${py(0)}" stroke="#dfe7f0"/>
+        <line x1="${pad}" y1="${py(50)}" x2="${W - pad}" y2="${py(50)}" stroke="#eef3f9"/>
+        <line x1="${pad}" y1="${py(100)}" x2="${W - pad}" y2="${py(100)}" stroke="#eef3f9"/>
+        <polyline points="${pts}" fill="none" stroke="#2b7de9" stroke-width="2"/>
+        ${dots}
+      </svg></div>`;
+    charts.appendChild(div);
+  }
+  if (!any) charts.innerHTML = '<p class="note">まだスコア付きの記録がありません</p>';
+
+  // セッション一覧(新しい順・最大30件)
+  const list = $("sessList");
+  list.innerHTML = "";
+  if (!ss.length) {
+    list.innerHTML = '<li><span class="when">まだ記録がありません。訓練タブから始めましょう。</span></li>';
+    return;
+  }
+  for (const s of [...ss].reverse().slice(0, 30)) {
+    const li = document.createElement("li");
+    const info = MODE_INFO[s.mode] || { icon: "❔", name: s.mode };
+    const label = s.label || [s.pattern, s.speed].filter(Boolean).join("・");
+    li.innerHTML = `
+      <span>${info.icon} <b>${info.name}</b>${s.program ? ` <span class="when">📋${s.program}</span>` : ""}
+        <span class="when">${label}・${s.dur}秒 / キャリブ: ${s.calib}</span></span>
+      <span><span class="when">${fmtDate(s.ts)}</span>
+        <span class="score">${s.score != null ? s.score + "点" : "実施"}</span></span>`;
+    list.appendChild(li);
+  }
+}
+
+/* テスト・デバッグ用フック(挙動には影響しない) */
+window.__eye = { get state() { return S; } };
+</script>
+</body>
+</html>
