@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>注意カレッジ — 注意機能・反応トレーニング</title>
+<style>
+  :root {
+    --bg: #f2f6fb;
+    --card: #ffffff;
+    --text: #26374a;
+    --muted: #7d8b9c;
+    --primary: #2b7de9;
+    --accent: #ff8c42;
+    --good: #2eb872;
+    --bad: #e05555;
+    --border: #dfe7f0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh; padding: 12px;
+  }
+  h1 { font-size: 1.15rem; margin: 4px 0 10px; }
+  .wrap { width: 100%; max-width: 760px; }
+
+  .tabbar { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tabbar button {
+    flex: 1; border: 1px solid var(--border); background: var(--card);
+    color: var(--muted); border-radius: 12px; padding: 10px 0;
+    font-size: .95rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .tabbar button.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px; margin-bottom: 12px;
+  }
+  .card h2 { font-size: 1rem; margin-bottom: 8px; }
+  .card p { font-size: .85rem; line-height: 1.7; color: var(--muted); }
+  .note { font-size: .75rem; color: var(--muted); line-height: 1.7; }
+  .cat-title { font-size: .82rem; font-weight: 700; color: var(--muted); margin: 14px 0 6px; }
+  .cat-title:first-child { margin-top: 0; }
+
+  .settings-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .settings-row label { font-size: .82rem; display: flex; align-items: center; gap: 6px; }
+  .settings-row input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--primary); }
+  .settings-row select {
+    border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px;
+    font-family: inherit; font-size: .82rem; background: #fff; color: var(--text);
+  }
+
+  .game-row {
+    display: flex; align-items: center; gap: 10px;
+    background: #f6f9fd; border-radius: 12px; padding: 10px 12px; margin-bottom: 8px;
+  }
+  .gr-icon { font-size: 1.5rem; width: 36px; text-align: center; flex-shrink: 0; }
+  .gr-info { flex: 1; min-width: 0; }
+  .gr-name { font-size: .88rem; font-weight: 700; }
+  .gr-name .gr-cat { font-size: .68rem; font-weight: 400; color: var(--muted); margin-left: 4px; }
+  .gr-rule { font-size: .74rem; color: var(--muted); line-height: 1.5; margin-top: 1px; }
+  .gr-level {
+    border: 1px solid var(--border); border-radius: 8px; padding: 7px 6px;
+    font-family: inherit; font-size: .78rem; background: #fff; color: var(--text); flex-shrink: 0;
+  }
+  .gr-start {
+    border: none; background: var(--primary); color: #fff; border-radius: 10px;
+    padding: 10px 14px; font-size: .9rem; font-weight: 700; cursor: pointer; flex-shrink: 0;
+  }
+
+  .btn {
+    border: none; border-radius: 12px; padding: 12px 20px;
+    font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-sub { background: #eef3f9; color: var(--text); }
+  .btn-danger { background: #fdeaea; color: #c0392b; font-size: .8rem; padding: 9px 14px; }
+
+  /* 記録タブ */
+  .stat-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+  .stat { flex: 1; min-width: 100px; background: #f6f9fd; border-radius: 12px; padding: 12px; text-align: center; }
+  .stat .num { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+  .stat .lbl { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+  .chart-box { overflow-x: auto; }
+  .chart-box svg { display: block; }
+  .sess-list { list-style: none; }
+  .sess-list li {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 9px 4px; border-bottom: 1px solid var(--border); font-size: .84rem;
+  }
+  .sess-list li:last-child { border-bottom: none; }
+  .sess-list .when { color: var(--muted); font-size: .74rem; }
+  .sess-list .score { font-weight: 700; color: var(--primary); white-space: nowrap; }
+
+  /* ゲームステージ */
+  #stage {
+    position: fixed; inset: 0; z-index: 50; background: #12233a;
+    display: none; flex-direction: column;
+  }
+  #stage.show { display: flex; }
+  .hud {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    color: #cfe0f2; font-size: .85rem; flex-shrink: 0;
+  }
+  .hud .grow { flex: 1; }
+  .hud .pill {
+    background: rgba(255,255,255,.12); border-radius: 999px; padding: 5px 12px;
+    font-weight: 700; white-space: nowrap;
+  }
+  .btn-quit {
+    background: rgba(255,255,255,.16); color: #fff; border: none;
+    border-radius: 999px; padding: 7px 16px; font-size: .82rem; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+
+  #playArea {
+    position: relative; flex: 1; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .scatter-item {
+    position: absolute; transform: translate(-50%, -50%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stim-center { font-size: 3.2rem; text-align: center; }
+  .stim-word { font-size: 2.6rem; font-weight: 700; }
+  .flanker-row { font-size: 2.6rem; letter-spacing: .3em; color: #fff; }
+  .flanker-row .ctr { color: #7fd4ff; }
+
+  #answerArea {
+    display: none; flex-wrap: wrap; gap: 12px; justify-content: center;
+    padding: 16px; flex-shrink: 0;
+  }
+  .ans-btn {
+    position: relative; overflow: hidden; min-width: 96px; min-height: 64px;
+    border: none; border-radius: 14px; background: #1c3a5c; color: #fff;
+    font-size: 1.3rem; font-weight: 700; cursor: pointer; font-family: inherit;
+    padding: 10px 20px;
+  }
+  .ans-btn.swatch { min-width: 84px; }
+  .dwell-fill {
+    position: absolute; left: 0; bottom: 0; height: 5px; width: 0%;
+    background: #ffe07a; transition: width linear;
+  }
+  .ans-btn.correct { background: var(--good); }
+  .ans-btn.wrong { background: var(--bad); }
+
+  .grid-wrap { display: grid; gap: 12px; }
+  .grid-cell {
+    width: 76px; height: 76px; border-radius: 14px; background: #1c3a5c;
+    cursor: pointer; transition: background .15s;
+  }
+  .grid-cell.lit { background: #ffe07a; }
+  .grid-cell.tapped { background: var(--good); }
+  .grid-cell.wrongcell { background: var(--bad); }
+
+  .stage-panel {
+    position: absolute; inset: 0; z-index: 8;
+    background: rgba(18, 35, 58, .93); color: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 20px; gap: 12px; overflow-y: auto;
+  }
+  .stage-panel.hidden { display: none; }
+  .stage-panel h2 { font-size: 1.25rem; }
+  .stage-panel p { font-size: .88rem; line-height: 1.8; max-width: 520px; color: #cfe0f2; }
+  .stage-panel .big { font-size: 3rem; font-weight: 700; }
+  .stage-panel .score-big { font-size: 2.6rem; font-weight: 700; color: #7fd4ff; }
+  .stage-panel .cmp { color: #ffe08a; font-size: .86rem; }
+  .stage-panel ul.summary { list-style: none; text-align: left; font-size: .88rem; line-height: 1.9; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+  #toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,.92); color: var(--text);
+    padding: 8px 18px; border-radius: 999px; font-size: .85rem; font-weight: 700;
+    opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 60;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
+
+  footer { font-size: .7rem; color: var(--muted); margin: 14px 0 6px; text-align: center; line-height: 1.8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧠 注意カレッジ <span style="font-size:.75rem;color:var(--muted);font-weight:400">— 注意機能・反応トレーニング</span></h1>
+  <div style="font-size:.8rem;margin:-4px 0 12px"><a href="index.html" style="color:var(--primary)">👁 アイリハビリ(眼球運動トレーニング)はこちら →</a></div>
+
+  <div class="tabbar">
+    <button id="tabPlay" class="active">🎮 ゲーム選択</button>
+    <button id="tabLog">📈 記録</button>
+  </div>
+
+  <!-- ============ ゲーム選択タブ ============ -->
+  <section id="viewPlay">
+    <div class="card">
+      <h2>設定</h2>
+      <div class="settings-row">
+        <label><input type="checkbox" id="optSound" checked> 効果音</label>
+        <label><input type="checkbox" id="optDwell"> 視線・注視入力(dwell選択)</label>
+        <select id="optDwellMs">
+          <option value="500">0.5秒で選択</option>
+          <option value="800" selected>0.8秒で選択</option>
+          <option value="1200">1.2秒で選択</option>
+        </select>
+        <label><input type="checkbox" id="optNoLimit"> 時間制限なしモード(反応が遅くても待つ)</label>
+      </div>
+      <p class="note" style="margin-top:8px">
+        ⚠️ 本アプリは注意機能のトレーニング・セルフチェックを目的としたものであり、診断には使用できません。疲れを感じたら中止してください。
+      </p>
+    </div>
+
+    <div class="card" id="gameList"></div>
+  </section>
+
+  <!-- ============ 記録タブ ============ -->
+  <section id="viewLog" style="display:none">
+    <div class="card">
+      <h2>これまでの実施状況</h2>
+      <div class="stat-grid" id="statGrid"></div>
+    </div>
+    <div class="card" id="chartsCard">
+      <h2>スコアの推移</h2>
+      <div id="charts"></div>
+    </div>
+    <div class="card">
+      <h2>最近のセッション</h2>
+      <ul class="sess-list" id="sessList"></ul>
+      <div style="margin-top:12px;text-align:right">
+        <button class="btn btn-danger" id="clearData">記録をすべて削除</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    本アプリは注意機能トレーニング・セルフチェックの補助を目的としたものであり、医療機器ではありません。診断・治療の判断には使用できません。<br>
+    データはブラウザ内(localStorage)にのみ保存されます。
+  </footer>
+</div>
+
+<!-- ============ ゲームステージ ============ -->
+<div id="stage">
+  <div class="hud">
+    <span class="pill" id="hudName"></span>
+    <span class="pill" id="hudLevel"></span>
+    <span class="pill" id="hudPhase"></span>
+    <span class="grow"></span>
+    <span class="pill" id="hudCount"></span>
+    <button class="btn-quit" id="quitBtn">✕ 中止</button>
+  </div>
+  <div id="playArea"></div>
+  <div id="answerArea"></div>
+  <div class="stage-panel hidden" id="panel"></div>
+  <div id="toast"></div>
+</div>
+
+<script>
+"use strict";
+
+/* ================= 設定・定数 ================= */
+const STORE_KEY = "attentionGames.v1";
+const LEVEL_LABEL = { easy: "やさしい", mid: "ふつう", hard: "むずかしい" };
+const CAT_LABEL = {
+  instant: "瞬間視・判断力", inhibit: "反応・抑制", select: "選択性注意",
+  memswitch: "記憶・切り替え", sustain: "持続性注意",
+};
+const CAT_ORDER = ["instant", "inhibit", "select", "memswitch", "sustain"];
+
+const SETTINGS = { sound: true, dwell: false, dwellMs: 800, noLimit: false };
+const $ = id => document.getElementById(id);
+$("optSound").addEventListener("change", e => SETTINGS.sound = e.target.checked);
+$("optDwell").addEventListener("change", e => SETTINGS.dwell = e.target.checked);
+$("optDwellMs").addEventListener("change", e => SETTINGS.dwellMs = +e.target.value);
+$("optNoLimit").addEventListener("change", e => SETTINGS.noLimit = e.target.checked);
+
+/* ================= 音 ================= */
+let audioCtx = null;
+function beep(freq = 880, dur = 0.08, vol = 0.15) {
+  if (!SETTINGS.sound) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.value = freq; o.connect(g); g.connect(audioCtx.destination);
+    g.gain.setValueAtTime(vol, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  } catch { /* 音が出せない環境では無音で続行 */ }
+}
+const sndCorrect = () => beep(1100, 0.09, 0.13);
+const sndWrong = () => beep(220, 0.14, 0.1);
+const sndGo = () => beep(700, 0.05, 0.08);
+
+/* ================= 保存データ ================= */
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || { sessions: [] }; }
+  catch { return { sessions: [] }; }
+}
+function saveSession(s) {
+  const d = loadData();
+  d.sessions.push(s);
+  localStorage.setItem(STORE_KEY, JSON.stringify(d));
+}
+$("clearData").addEventListener("click", () => {
+  if (confirm("これまでの記録をすべて削除します。よろしいですか?")) {
+    localStorage.removeItem(STORE_KEY);
+    renderLog();
+  }
+});
+
+/* ================= タブ ================= */
+$("tabPlay").addEventListener("click", () => switchTab(true));
+$("tabLog").addEventListener("click", () => switchTab(false));
+function switchTab(play) {
+  $("tabPlay").classList.toggle("active", play);
+  $("tabLog").classList.toggle("active", !play);
+  $("viewPlay").style.display = play ? "" : "none";
+  $("viewLog").style.display = play ? "none" : "";
+  if (!play) renderLog();
+}
+
+function median(arr) {
+  if (!arr.length) return null;
+  const a = [...arr].sort((x, y) => x - y);
+  return a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2;
+}
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function randInt(min, max) { return Math.floor(min + Math.random() * (max - min + 1)); }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/* ================= ゲーム登録 ================= */
+const GAMES = [
+  { id: "flashcount", icon: "⚡", name: "フラッシュカウント", cat: "instant", rule: "一瞬出た●の数を答える" },
+  { id: "moredots", icon: "🔵", name: "どっちが多い?", cat: "instant", rule: "左右のドット群、多い方を即答" },
+  { id: "lradd", icon: "➕", name: "左右たしざん", cat: "instant", rule: "左右に一瞬出た数字の合計を答える" },
+  { id: "mole", icon: "🔨", name: "モグラたたき", cat: "inhibit", rule: "出た瞬間にタップ、速さを競う" },
+  { id: "gonogo", icon: "🚦", name: "青はGO・赤はダメ", cat: "inhibit", rule: "青だけタップ、赤は我慢" },
+  { id: "stroop", icon: "🎨", name: "いろよみクイズ", cat: "select", rule: "文字の「色」の方を答える" },
+  { id: "oddoneout", icon: "🔍", name: "仲間はずれ探し", cat: "select", rule: "1つだけ違う絵を探してタップ" },
+  { id: "flanker", icon: "➡️", name: "まんなかの矢印", cat: "select", rule: "周りに惑わされず中央の矢印の向きを答える" },
+  { id: "corsi", icon: "✨", name: "光ったのはどこ?", cat: "memswitch", rule: "光ったマスの位置(→順序)を答える" },
+  { id: "trail", icon: "🔢", name: "順番タッチ", cat: "memswitch", rule: "1→2→3…の順にタップ" },
+  { id: "nback", icon: "🔁", name: "さっきと同じ?", cat: "sustain", rule: "直前と同じ絵が出たらタップ" },
+  { id: "cpt", icon: "👁", name: "見張り番", cat: "sustain", rule: "長い流れの中の「当たり」だけに反応" },
+];
+
+function renderGameList() {
+  const box = $("gameList");
+  box.innerHTML = "<h2>ゲームを選ぶ</h2>";
+  for (const cat of CAT_ORDER) {
+    const h = document.createElement("div");
+    h.className = "cat-title";
+    h.textContent = CAT_LABEL[cat];
+    box.appendChild(h);
+    for (const g of GAMES.filter(x => x.cat === cat)) {
+      const row = document.createElement("div");
+      row.className = "game-row";
+      row.innerHTML = `
+        <div class="gr-icon">${g.icon}</div>
+        <div class="gr-info">
+          <div class="gr-name">${g.name} <span class="gr-cat">${CAT_LABEL[g.cat]}</span></div>
+          <div class="gr-rule">${g.rule}</div>
+        </div>
+        <select class="gr-level" id="lv-${g.id}">
+          <option value="easy">やさしい</option>
+          <option value="mid" selected>ふつう</option>
+          <option value="hard">むずかしい</option>
+        </select>
+        <button class="gr-start btn" data-game="${g.id}">▶</button>`;
+      box.appendChild(row);
+    }
+  }
+  box.querySelectorAll(".gr-start").forEach(btn =>
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.game;
+      const level = $(`lv-${id}`).value;
+      launchGame(id, level);
+    }));
+}
+renderGameList();
+
+/* ================= 共通ステージ制御 ================= */
+const stage = $("stage"), playArea = $("playArea"), answerArea = $("answerArea"), panel = $("panel");
+const hudName = $("hudName"), hudLevel = $("hudLevel"), hudPhase = $("hudPhase"), hudCount = $("hudCount");
+let G = null; // 現在のゲームセッション
+
+$("quitBtn").addEventListener("click", quitGame);
+window.addEventListener("keydown", e => { if (e.key === "Escape" && stage.classList.contains("show")) quitGame(); });
+
+function clearTimers() { if (G) { G.timers.forEach(id => clearTimeout(id)); G.timers = []; } }
+function after(ms, fn) { const id = setTimeout(fn, ms); G.timers.push(id); return id; }
+function clearPlay() { playArea.innerHTML = ""; }
+function clearAnswers() { answerArea.innerHTML = ""; answerArea.style.display = "none"; }
+
+function showToast(msg, ms = 1600) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove("show"), ms);
+}
+
+/* dwell(注視滞留)選択にも対応した汎用タップ要素 */
+function makeTappable(el, onPick) {
+  let timer = null;
+  const fill = document.createElement("div");
+  fill.className = "dwell-fill";
+  el.style.position = el.style.position || "relative";
+  el.appendChild(fill);
+  function start() {
+    if (!SETTINGS.dwell || el.disabled) return;
+    fill.style.transition = `width ${SETTINGS.dwellMs}ms linear`;
+    requestAnimationFrame(() => { fill.style.width = "100%"; });
+    timer = setTimeout(() => { cancel(); onPick(); }, SETTINGS.dwellMs);
+  }
+  function cancel() {
+    clearTimeout(timer);
+    fill.style.transition = "none";
+    fill.style.width = "0%";
+  }
+  el.addEventListener("pointerenter", start);
+  el.addEventListener("pointerleave", cancel);
+  el.addEventListener("click", () => { cancel(); onPick(); });
+  return el;
+}
+function makeChoiceButton(label, onPick, opts = {}) {
+  const btn = document.createElement("button");
+  btn.className = "ans-btn" + (opts.swatch ? " swatch" : "");
+  if (opts.bg) btn.style.background = opts.bg;
+  btn.innerHTML = `<span class="ans-label">${label}</span>`;
+  makeTappable(btn, () => onPick(btn));
+  return btn;
+}
+function showAnswers(defs) {
+  answerArea.innerHTML = "";
+  answerArea.style.display = "flex";
+  const btns = defs.map(d => {
+    const b = makeChoiceButton(d.label, () => d.onPick(b), d);
+    answerArea.appendChild(b);
+    return b;
+  });
+  return btns;
+}
+function placeScatter(el, x, y) {
+  el.classList.add("scatter-item");
+  el.style.left = (x * 100) + "%";
+  el.style.top = (y * 100) + "%";
+}
+function scatterPositions(n, minDist) {
+  let md = minDist;
+  for (let pass = 0; pass < 20; pass++) {
+    const pts = [];
+    let guard = 0;
+    while (pts.length < n && guard < 3000) {
+      guard++;
+      const p = { x: 0.08 + Math.random() * 0.84, y: 0.12 + Math.random() * 0.76 };
+      if (pts.every(q => Math.hypot(q.x - p.x, q.y - p.y) > md)) pts.push(p);
+    }
+    if (pts.length >= n) return pts;
+    md *= 0.8;
+  }
+  return Array.from({ length: n }, () => ({ x: 0.08 + Math.random() * 0.84, y: 0.12 + Math.random() * 0.76 }));
+}
+
+/* ================= ゲーム起動・共通イントロ/結果 ================= */
+const INTRO_TEXT = {
+  flashcount: "●が一瞬だけ表示されます。何個あったか、下のボタンで答えてください。",
+  moredots: "左右にドットの集まりが一瞬表示されます。多かった方をすぐに答えてください。",
+  lradd: "左右に数字が一瞬表示されます。2つを足した答えを選んでください。",
+  mole: "ランダムなタイミングで的が出ます。出た瞬間にタップしてください。",
+  gonogo: "円が次々表示されます。青いときだけ「GO!」ボタンをタップ、赤いときは我慢してください。",
+  stroop: "文字が色つきで表示されます。文字の意味ではなく、<b>表示されている色</b>を選んでください。",
+  oddoneout: "同じ絵の中に1つだけ違う絵があります。見つけてタップしてください。",
+  flanker: "矢印が5つ並びます。<b>まんなかの矢印</b>の向きだけをボタンで答えてください。",
+  corsi: "マスが順番に光ります。同じ順番でタップして再現してください。回数が増えるほど長くなります。",
+  trail: "散らばった数字を、1→2→3…の順にタップしてください。全部タップしたらタイム計測終了です。",
+  nback: "絵が1つずつ表示されます。<b>直前と同じ絵</b>が出たときだけ「同じ!」ボタンをタップしてください。",
+  cpt: "長い時間、絵が流れ続けます。まれに出る「当たり」のときだけ「反応」ボタンをタップしてください(長めの課題です)。",
+};
+
+function launchGame(id, level) {
+  G = { id, level, phase: "intro", trials: [], timers: [], startT: 0 };
+  stage.classList.add("show");
+  clearAnswers();
+  clearPlay();
+  const meta = GAMES.find(g => g.id === id);
+  hudName.textContent = `${meta.icon} ${meta.name}`;
+  hudLevel.textContent = LEVEL_LABEL[level];
+  hudPhase.textContent = "準備";
+  hudCount.textContent = "";
+  panel.classList.remove("hidden");
+  panel.innerHTML = `
+    <div style="font-size:2.5rem">${meta.icon}</div>
+    <h2>${meta.name}</h2>
+    <p>${INTRO_TEXT[id]}</p>
+    <div class="btn-row"><button class="btn btn-accent" id="pStart">▶ 練習からはじめる</button></div>`;
+  $("pStart").addEventListener("click", () => {
+    panel.classList.add("hidden");
+    RUNNERS[id](level, true);
+  });
+}
+function quitGame() {
+  clearTimers();
+  stage.classList.remove("show");
+  clearAnswers();
+  clearPlay();
+  G = null;
+}
+function countdownThen(fn) {
+  hudPhase.textContent = G.practice ? "練習" : "本番";
+  let n = 3;
+  clearPlay();
+  const el = document.createElement("div");
+  el.style.cssText = "color:#fff;font-size:4.5rem;font-weight:700";
+  el.textContent = String(n);
+  playArea.appendChild(el);
+  const tick = () => {
+    n--;
+    if (n <= 0) { clearPlay(); fn(); return; }
+    el.textContent = String(n);
+    after(700, tick);
+  };
+  after(700, tick);
+}
+
+function scoreSuggestion(sess) {
+  if (sess.score == null || sess.score < 80) return "";
+  const NEXT = { easy: "mid", mid: "hard" };
+  const next = NEXT[sess.level];
+  if (!next) return "";
+  const d = loadData();
+  const same = d.sessions.filter(s => s.game === sess.game && s.level === sess.level && s.score != null);
+  const last3 = same.slice(-3);
+  if (last3.length < 3 || !last3.every(s => s.score >= 80)) return "";
+  return `🎉 「${LEVEL_LABEL[sess.level]}」で3回連続80点以上!次は「${LEVEL_LABEL[next]}」に挑戦してみましょう`;
+}
+
+function finishGame(metrics, score, detail) {
+  clearTimers();
+  clearAnswers();
+  clearPlay();
+  const meta = GAMES.find(g => g.id === G.id);
+  const d = loadData();
+  const sameScored = d.sessions.filter(s => s.game === G.id && s.level === G.level && s.score != null);
+  const prev = sameScored.length ? sameScored[sameScored.length - 1].score : null;
+  const best = sameScored.length ? Math.max(...sameScored.map(s => s.score)) : null;
+
+  const sess = { ts: Date.now(), game: G.id, level: G.level, score, metrics, detail };
+  saveSession(sess);
+  const suggest = scoreSuggestion(sess);
+
+  beep(1000, 0.15); setTimeout(() => beep(1400, 0.2), 160);
+  panel.classList.remove("hidden");
+  panel.innerHTML = `
+    <div style="font-size:2.4rem">🎉</div>
+    <h2>${meta.icon} ${meta.name} おつかれさまでした!</h2>
+    ${score != null ? `<div class="score-big">${score}<span style="font-size:1.2rem"> 点</span></div>` : `<div class="big" style="font-size:1.6rem">実施完了</div>`}
+    <p>${detail}</p>
+    ${score != null && (prev != null || best != null) ? `<p class="cmp">${prev != null ? `前回: ${prev}点` : ""}${prev != null && best != null ? " / " : ""}${best != null ? `自己ベスト: ${best}点` : ""}</p>` : ""}
+    ${suggest ? `<p class="cmp">${suggest}</p>` : ""}
+    <div class="btn-row">
+      <button class="btn btn-accent" id="pAgain">もう一度</button>
+      <button class="btn btn-sub" id="pClose">ゲーム選択へ戻る</button>
+    </div>`;
+  $("pAgain").addEventListener("click", () => { panel.classList.add("hidden"); RUNNERS[G.id](G.level, true); });
+  $("pClose").addEventListener("click", quitGame);
+}
+
+/* ============================================================
+   共通ランナーA: 瞬間提示 → 非表示 → 選択肢で回答
+   (フラッシュカウント / 左右たしざん / どっちが多い?)
+   ============================================================ */
+function startFlashRecall(id, level, cfg) {
+  const state = { i: 0, practice: true, log: [] };
+  countdownThen(() => nextTrial());
+
+  function nextTrial() {
+    if (state.practice && state.i >= 3) { state.practice = false; state.i = 0; state.log = []; }
+    if (!state.practice && state.i >= cfg.mainTrials) { finish(); return; }
+    G.practice = state.practice;
+    hudPhase.textContent = state.practice ? "練習" : "本番";
+    hudCount.textContent = state.practice ? `練習 ${state.i + 1}/3` : `${state.i + 1} / ${cfg.mainTrials}`;
+    clearAnswers();
+    clearPlay();
+    const trial = cfg.gen();
+    trial.render(playArea);
+    after(trial.ms, () => {
+      clearPlay();
+      let picked = false;
+      const btns = showAnswers(trial.choices.map(c => ({
+        label: c.label,
+        onPick: (btnEl) => {
+          if (picked) return; picked = true;
+          const rt = performance.now() - hideT;
+          const ok = !!c.correct;
+          btnEl.classList.add(ok ? "correct" : "wrong");
+          (ok ? sndCorrect : sndWrong)();
+          if (!state.practice) state.log.push({ ok, rt });
+          after(SETTINGS.noLimit ? 500 : 350, () => { state.i++; nextTrial(); });
+        },
+      })));
+      const hideT = performance.now();
+    });
+  }
+  function finish() {
+    const acc = state.log.length ? Math.round(100 * state.log.filter(t => t.ok).length / state.log.length) : null;
+    const rtMed = median(state.log.filter(t => t.ok).map(t => t.rt));
+    const score = acc;
+    const detail = `正答率 ${acc}%` + (rtMed ? ` / 平均反応 ${Math.round(rtMed)}ms` : "");
+    finishGame({ acc, medianRT: rtMed ? Math.round(rtMed) : null }, score, detail);
+  }
+}
+
+function genFlashCount(level) {
+  const P = { easy: { n: [2, 4], ms: 900 }, mid: { n: [3, 6], ms: 700 }, hard: { n: [4, 9], ms: 500 } }[level];
+  return () => {
+    const n = randInt(P.n[0], P.n[1]);
+    const pts = scatterPositions(n, 0.13);
+    const opts = new Set([n]);
+    while (opts.size < 4) opts.add(Math.max(1, n + randInt(-3, 3)));
+    const choices = shuffle([...opts]).map(v => ({ label: String(v), correct: v === n }));
+    return {
+      ms: P.ms,
+      choices,
+      render(container) {
+        pts.forEach(p => {
+          const dot = document.createElement("div");
+          dot.style.cssText = "width:34px;height:34px;border-radius:50%;background:#7fd4ff;font-size:0";
+          placeScatter(dot, p.x, p.y);
+          container.appendChild(dot);
+        });
+      },
+    };
+  };
+}
+function genMoreDots(level) {
+  const P = { easy: { ratio: 2.0, ms: 700 }, mid: { ratio: 1.5, ms: 600 }, hard: { ratio: 1.2, ms: 500 } }[level];
+  return () => {
+    const base = randInt(4, 8);
+    const more = Math.max(base + 1, Math.round(base * P.ratio));
+    const leftMore = Math.random() < 0.5;
+    const leftN = leftMore ? more : base, rightN = leftMore ? base : more;
+    return {
+      ms: P.ms,
+      choices: [
+        { label: "左が多い", correct: leftMore },
+        { label: "右が多い", correct: !leftMore },
+      ],
+      render(container) {
+        const mk = (n, xBase) => {
+          const pts = [];
+          let guard = 0;
+          while (pts.length < n && guard < 800) {
+            guard++;
+            const p = { x: xBase + Math.random() * 0.32, y: 0.15 + Math.random() * 0.7 };
+            if (pts.every(q => Math.hypot(q.x - p.x, q.y - p.y) > 0.07)) pts.push(p);
+          }
+          pts.forEach(p => {
+            const dot = document.createElement("div");
+            const s = 14 + Math.random() * 16;
+            dot.style.cssText = `width:${s}px;height:${s}px;border-radius:50%;background:#ffd27a`;
+            placeScatter(dot, p.x, p.y);
+            container.appendChild(dot);
+          });
+        };
+        mk(leftN, 0.06);
+        mk(rightN, 0.62);
+        const div = document.createElement("div");
+        div.style.cssText = "position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(255,255,255,.2)";
+        container.appendChild(div);
+      },
+    };
+  };
+}
+function genLrAdd(level) {
+  const P = { easy: { max: 5, ms: 1300 }, mid: { max: 9, ms: 900 }, hard: { max: 12, ms: 600 } }[level];
+  return () => {
+    const a = randInt(1, P.max), b = randInt(1, P.max);
+    const sum = a + b;
+    const opts = new Set([sum]);
+    while (opts.size < 4) opts.add(Math.max(2, sum + randInt(-4, 4)));
+    const choices = shuffle([...opts]).map(v => ({ label: String(v), correct: v === sum }));
+    return {
+      ms: P.ms,
+      choices,
+      render(container) {
+        const L = document.createElement("div"); L.className = "stim-word"; L.style.color = "#fff"; L.textContent = a;
+        const R = document.createElement("div"); R.className = "stim-word"; R.style.color = "#fff"; R.textContent = b;
+        placeScatter(L, 0.22, 0.5); placeScatter(R, 0.78, 0.5);
+        container.appendChild(L); container.appendChild(R);
+      },
+    };
+  };
+}
+
+/* ============================================================
+   共通ランナーB: 刺激+選択肢を同時提示、即答(反応時間を計測)
+   (いろよみクイズ / まんなかの矢印)
+   ============================================================ */
+function startFlashDecide(id, level, cfg) {
+  const state = { i: 0, practice: true, log: [] };
+  countdownThen(() => nextTrial());
+
+  function nextTrial() {
+    if (state.practice && state.i >= 3) { state.practice = false; state.i = 0; state.log = []; }
+    if (!state.practice && state.i >= cfg.mainTrials) { finish(); return; }
+    G.practice = state.practice;
+    hudPhase.textContent = state.practice ? "練習" : "本番";
+    hudCount.textContent = state.practice ? `練習 ${state.i + 1}/3` : `${state.i + 1} / ${cfg.mainTrials}`;
+    clearAnswers();
+    clearPlay();
+    const trial = cfg.gen();
+    trial.render(playArea);
+    const onset = performance.now();
+    let picked = false;
+    let limitTimer = null;
+    showAnswers(trial.choices.map(c => ({
+      label: c.label, bg: c.bg,
+      onPick: (btnEl) => {
+        if (picked) return; picked = true;
+        clearTimeout(limitTimer);
+        const rt = performance.now() - onset;
+        const ok = !!c.correct;
+        btnEl.classList.add(ok ? "correct" : "wrong");
+        (ok ? sndCorrect : sndWrong)();
+        if (!state.practice) state.log.push({ ok, rt, congruent: trial.congruent });
+        after(SETTINGS.noLimit ? 500 : 350, () => { state.i++; nextTrial(); });
+      },
+    })));
+    if (!SETTINGS.noLimit && cfg.limit) {
+      limitTimer = after(cfg.limit, () => {
+        if (picked) return; picked = true;
+        sndWrong();
+        showToast("時間切れ!");
+        if (!state.practice) state.log.push({ ok: false, rt: cfg.limit, congruent: trial.congruent, timeout: true });
+        after(300, () => { state.i++; nextTrial(); });
+      });
+    }
+  }
+  function finish() {
+    const acc = state.log.length ? Math.round(100 * state.log.filter(t => t.ok).length / state.log.length) : null;
+    const cong = state.log.filter(t => t.congruent && t.ok);
+    const incong = state.log.filter(t => !t.congruent && t.ok);
+    const rtC = median(cong.map(t => t.rt)), rtI = median(incong.map(t => t.rt));
+    const interference = (rtC != null && rtI != null) ? Math.round(rtI - rtC) : null;
+    const rtAll = median(state.log.filter(t => t.ok).map(t => t.rt));
+    const rtPenalty = rtAll == null ? 0 : Math.max(0, Math.min(1, 1 - (rtAll - 500) / 1500));
+    const score = acc == null ? null : Math.round(0.75 * acc + 0.25 * rtPenalty * 100);
+    const detail = `正答率 ${acc}%` + (interference != null ? ` / 干渉(不一致−一致) ${interference}ms` : "");
+    finishGame({ acc, interferenceMs: interference }, score, detail);
+  }
+}
+function genStroop(level) {
+  const P = { easy: { congRate: 0.7, limit: 0 }, mid: { congRate: 0.5, limit: 3000 }, hard: { congRate: 0.3, limit: 2000 } }[level];
+  const COLORS = [{ name: "あか", col: "#ff5a5a" }, { name: "あお", col: "#4a90ff" }, { name: "みどり", col: "#3ec27a" }, { name: "きいろ", col: "#ffd23e" }];
+  return () => {
+    const wordC = pick(COLORS);
+    const congruent = Math.random() < P.congRate;
+    const dispC = congruent ? wordC : pick(COLORS.filter(c => c !== wordC));
+    const choices = shuffle(COLORS.map(c => ({ label: "　　", bg: c.col, correct: c === dispC })));
+    return {
+      congruent, limit: P.limit,
+      choices,
+      render(container) {
+        const el = document.createElement("div");
+        el.className = "stim-word";
+        el.style.color = dispC.col;
+        el.textContent = wordC.name;
+        container.appendChild(el);
+      },
+    };
+  };
+}
+function genFlanker(level) {
+  const P = { easy: { congRate: 0.7, limit: 0 }, mid: { congRate: 0.5, limit: 2500 }, hard: { congRate: 0.3, limit: 1800 } }[level];
+  return () => {
+    const dir = Math.random() < 0.5 ? "left" : "right";
+    const congruent = Math.random() < P.congRate;
+    const flankDir = congruent ? dir : (dir === "left" ? "right" : "left");
+    const arrow = d => d === "left" ? "←" : "→";
+    const parts = [flankDir, flankDir, dir, flankDir, flankDir].map((d, i) => i === 2 ? `<span class="ctr">${arrow(d)}</span>` : arrow(d));
+    return {
+      congruent, limit: P.limit,
+      choices: [
+        { label: "←", correct: dir === "left" },
+        { label: "→", correct: dir === "right" },
+      ],
+      render(container) {
+        const el = document.createElement("div");
+        el.className = "flanker-row";
+        el.innerHTML = parts.join(" ");
+        container.appendChild(el);
+      },
+    };
+  };
+}
+
+/* ============================================================
+   共通ランナーC: 一定間隔の連続刺激、まれな標的だけに反応
+   (Go/No-Go / さっきと同じ? / 見張り番)
+   ============================================================ */
+function startStreamTask(id, level, cfg) {
+  // cfg: { interval, showMs, genStim(i, ctxState)=>{content,isTarget}, count OR durationSec,
+  //        respondLabel, practiceCount OR practiceSec, computeScore(trials, ctxState) }
+  const state = { i: 0, practice: true, trials: [], ctxState: {}, respBtn: null, curResponded: false, curTrial: null };
+  countdownThen(() => beginPhase());
+
+  function beginPhase() {
+    hudPhase.textContent = state.practice ? "練習" : "本番";
+    clearPlay(); clearAnswers();
+    const btnRow = document.createElement("div");
+    btnRow.style.cssText = "display:flex;justify-content:center;padding:16px";
+    const btn = makeChoiceButton(cfg.respondLabel, () => onRespond());
+    btn.style.minWidth = "160px"; btn.style.minHeight = "84px"; btn.style.fontSize = "1.5rem";
+    answerArea.innerHTML = ""; answerArea.style.display = "flex";
+    answerArea.appendChild(btn);
+    state.respBtn = btn;
+    state.startT = performance.now();
+    state.i = 0;
+    step();
+  }
+  function onRespond() {
+    if (state.curResponded || !state.curTrial) return;
+    state.curResponded = true;
+    const rt = performance.now() - state.curTrial.onset;
+    state.curTrial.responded = true;
+    state.curTrial.rt = rt;
+    if (state.curTrial.isTarget) sndCorrect(); else sndWrong();
+  }
+  function step() {
+    const elapsedSec = (performance.now() - state.startT) / 1000;
+    const limitReached = state.practice
+      ? (cfg.practiceCount ? state.i >= cfg.practiceCount : elapsedSec >= cfg.practiceSec)
+      : (cfg.count ? state.i >= cfg.count : elapsedSec >= cfg.durationSec);
+    if (limitReached) {
+      if (state.practice) { state.practice = false; state.trials = []; beginPhase(); return; }
+      finish(); return;
+    }
+    const stim = cfg.genStim(state.i, state.ctxState);
+    clearPlay();
+    const el = document.createElement("div");
+    el.className = "stim-center";
+    el.innerHTML = stim.content;
+    playArea.appendChild(el);
+    const trial = { isTarget: stim.isTarget, onset: performance.now(), responded: false, rt: null };
+    state.curTrial = trial; state.curResponded = false;
+    if (!state.practice) state.trials.push(trial);
+    hudCount.textContent = state.practice
+      ? `練習 ${state.i + 1}/${cfg.practiceCount || "?"}`
+      : (cfg.count ? `${state.i + 1} / ${cfg.count}` : `残り 約${Math.max(0, Math.ceil(cfg.durationSec - elapsedSec))}秒`);
+    after(cfg.showMs, () => { if (playArea.contains(el)) clearPlay(); });
+    state.i++;
+    after(cfg.interval, step);
+  }
+  function finish() {
+    const { score, metrics, detail } = cfg.computeScore(state.trials, state.ctxState);
+    finishGame(metrics, score, detail);
+  }
+}
+
+function goNoGoCfg(level) {
+  const P = { easy: { interval: 1400, show: 900, goRate: 0.8 }, mid: { interval: 1100, show: 700, goRate: 0.7 }, hard: { interval: 850, show: 550, goRate: 0.6 } }[level];
+  return {
+    interval: P.interval, showMs: P.show, count: 20, practiceCount: 6,
+    respondLabel: "GO!",
+    genStim() {
+      const isTarget = Math.random() < P.goRate;
+      const color = isTarget ? "#3ec27a" : "#ff5a5a";
+      return { isTarget, content: `<div style="width:100px;height:100px;border-radius:50%;background:${color}"></div>` };
+    },
+    computeScore(trials) {
+      const goT = trials.filter(t => t.isTarget), nogoT = trials.filter(t => !t.isTarget);
+      const hits = goT.filter(t => t.responded), commissions = nogoT.filter(t => t.responded);
+      const goAcc = goT.length ? hits.length / goT.length : 0;
+      const commRate = nogoT.length ? commissions.length / nogoT.length : 0;
+      const rtMed = median(hits.map(t => t.rt));
+      const score = Math.round(70 * goAcc + 30 * (1 - commRate));
+      return {
+        score, metrics: { goAcc: Math.round(goAcc * 100), commissionRate: Math.round(commRate * 100), medianRT: rtMed ? Math.round(rtMed) : null },
+        detail: `GO正答 ${Math.round(goAcc * 100)}% / 誤反応(我慢できず) ${Math.round(commRate * 100)}%` + (rtMed ? ` / 反応 ${Math.round(rtMed)}ms` : ""),
+      };
+    },
+  };
+}
+function nbackCfg(level) {
+  const P = { easy: { n: 1, interval: 2200 }, mid: { n: 1, interval: 1700 }, hard: { n: 2, interval: 1500 } }[level];
+  const POOL = ["🍎", "🐝", "⭐", "🎈", "🍇"];
+  return {
+    interval: P.interval, showMs: P.interval - 150, count: 20 + P.n, practiceCount: 6 + P.n,
+    respondLabel: "同じ!",
+    genStim(i, ctx) {
+      ctx.hist = ctx.hist || [];
+      let val;
+      const canMatch = ctx.hist.length >= P.n;
+      if (canMatch && Math.random() < 0.32) val = ctx.hist[ctx.hist.length - P.n];
+      else {
+        do { val = pick(POOL); } while (canMatch && val === ctx.hist[ctx.hist.length - P.n] && Math.random() < 0.7);
+      }
+      const isTarget = canMatch && val === ctx.hist[ctx.hist.length - P.n];
+      ctx.hist.push(val);
+      return { isTarget, content: `<span style="font-size:4rem">${val}</span>` };
+    },
+    computeScore(trials) {
+      const targets = trials.filter(t => t.isTarget), non = trials.filter(t => !t.isTarget);
+      const hits = targets.filter(t => t.responded), fa = non.filter(t => t.responded);
+      const hitRate = targets.length ? hits.length / targets.length : 0;
+      const faRate = non.length ? fa.length / non.length : 0;
+      const rtMed = median(hits.map(t => t.rt));
+      const score = Math.round(70 * hitRate + 30 * (1 - faRate));
+      return {
+        score, metrics: { hitRate: Math.round(hitRate * 100), falseAlarmRate: Math.round(faRate * 100), medianRT: rtMed ? Math.round(rtMed) : null },
+        detail: `的中率 ${Math.round(hitRate * 100)}% / 誤反応 ${Math.round(faRate * 100)}%` + (rtMed ? ` / 反応 ${Math.round(rtMed)}ms` : ""),
+      };
+    },
+  };
+}
+function cptCfg(level) {
+  const P = { easy: { durationSec: 90, interval: 1000, targetRate: 0.15 }, mid: { durationSec: 150, interval: 900, targetRate: 0.12 }, hard: { durationSec: 210, interval: 800, targetRate: 0.10 } }[level];
+  const COMMON = ["🔷", "🔶", "🔺", "🟣", "⬛"];
+  return {
+    interval: P.interval, showMs: P.interval - 150, durationSec: P.durationSec, practiceSec: 12,
+    respondLabel: "反応",
+    genStim() {
+      const isTarget = Math.random() < P.targetRate;
+      return { isTarget, content: isTarget ? `<span style="font-size:4rem">🚨</span>` : `<span style="font-size:4rem">${pick(COMMON)}</span>` };
+    },
+    computeScore(trials) {
+      const targets = trials.filter(t => t.isTarget), non = trials.filter(t => !t.isTarget);
+      const hits = targets.filter(t => t.responded), fa = non.filter(t => t.responded);
+      const omitRate = targets.length ? 1 - hits.length / targets.length : 0;
+      const commRate = non.length ? fa.length / non.length : 0;
+      const half = Math.floor(targets.length / 2);
+      const firstHalf = targets.slice(0, half), secondHalf = targets.slice(half);
+      const omitFirst = firstHalf.length ? 1 - firstHalf.filter(t => t.responded).length / firstHalf.length : 0;
+      const omitSecond = secondHalf.length ? 1 - secondHalf.filter(t => t.responded).length / secondHalf.length : 0;
+      const rtMed = median(hits.map(t => t.rt));
+      const score = Math.round(70 * (1 - omitRate) + 30 * (1 - commRate));
+      return {
+        score,
+        metrics: { omitRate: Math.round(omitRate * 100), commRate: Math.round(commRate * 100), omitFirstHalf: Math.round(omitFirst * 100), omitSecondHalf: Math.round(omitSecond * 100), medianRT: rtMed ? Math.round(rtMed) : null },
+        detail: `見逃し ${Math.round(omitRate * 100)}%(前半${Math.round(omitFirst * 100)}%→後半${Math.round(omitSecond * 100)}%) / 誤反応 ${Math.round(commRate * 100)}%`,
+      };
+    },
+  };
+}
+
+/* ============================================================
+   個別実装: モグラたたき
+   ============================================================ */
+function startMole(id, level) {
+  const P = { easy: { waitMin: 1500, waitMax: 3500, window: 1500 }, mid: { waitMin: 1000, waitMax: 3000, window: 1100 }, hard: { waitMin: 600, waitMax: 2200, window: 800 } }[level];
+  const state = { i: 0, practice: true, log: [], flying: 0, waiting: false, appeared: false, appearT: 0 };
+  countdownThen(() => beginPhase());
+  const totalPractice = 3, totalMain = 10;
+
+  function beginPhase() {
+    hudPhase.textContent = state.practice ? "練習" : "本番";
+    state.i = 0;
+    clearPlay();
+    playArea.style.cursor = "pointer";
+    playArea.onclick = e => {
+      if (state.waiting && !state.appeared) { state.flying++; showToast("フライング!出るまで待ちましょう"); sndWrong(); }
+    };
+    nextTrial();
+  }
+  function nextTrial() {
+    const total = state.practice ? totalPractice : totalMain;
+    if (state.i >= total) {
+      if (state.practice) { state.practice = false; state.log = []; state.flying = 0; beginPhase(); return; }
+      finish(); return;
+    }
+    hudCount.textContent = state.practice ? `練習 ${state.i + 1}/${totalPractice}` : `${state.i + 1} / ${totalMain}`;
+    clearPlay();
+    state.waiting = true; state.appeared = false;
+    const wait = randInt(P.waitMin, P.waitMax);
+    after(wait, () => {
+      state.appeared = true; state.waiting = false;
+      const p = scatterPositions(1, 0)[0] || { x: 0.5, y: 0.5 };
+      const mole = document.createElement("button");
+      mole.textContent = "🐹";
+      mole.style.cssText = "font-size:3.4rem;background:none;border:none;cursor:pointer;padding:8px";
+      placeScatter(mole, p.x, p.y);
+      state.appearT = performance.now();
+      let done = false;
+      makeTappable(mole, () => {
+        if (done) return; done = true;
+        const rt = performance.now() - state.appearT;
+        if (!state.practice) state.log.push(rt);
+        sndCorrect();
+        clearPlay();
+        state.i++; after(300, nextTrial);
+      });
+      playArea.appendChild(mole);
+      after(P.window, () => {
+        if (done) return; done = true;
+        clearPlay();
+        showToast("タイムアウト!");
+        state.i++; after(200, nextTrial);
+      });
+    });
+  }
+  function finish() {
+    playArea.onclick = null;
+    const rts = state.log;
+    const mean = rts.length ? Math.round(rts.reduce((a, b) => a + b, 0) / rts.length) : null;
+    const min = rts.length ? Math.round(Math.min(...rts)) : null;
+    const penalty = state.flying * 5;
+    const rtScore = mean == null ? 0 : Math.max(0, Math.min(100, 100 - (mean - 250) / 6));
+    const score = mean == null ? null : Math.max(0, Math.round(rtScore - penalty));
+    const detail = mean != null
+      ? `平均反応 ${mean}ms(最速 ${min}ms)/ 成功 ${rts.length}/${totalMain}` + (state.flying ? ` / フライング ${state.flying}回` : "")
+      : "反応できた回数が足りませんでした";
+    finishGame({ meanRT: mean, minRT: min, flying: state.flying, hits: rts.length }, score, detail);
+  }
+}
+
+/* ============================================================
+   個別実装: 光ったのはどこ?(Corsiブロック風)
+   ============================================================ */
+function startCorsi(id, level) {
+  const P = { easy: { grid: 3, flashMs: 700 }, mid: { grid: 3, flashMs: 550 }, hard: { grid: 4, flashMs: 500 } }[level];
+  const cells = [];
+  const state = { practice: true, len: 2, misses: 0, best: 0, seqCount: 0 };
+  countdownThen(() => { buildGrid(); nextRound(); });
+
+  function buildGrid() {
+    clearPlay();
+    const wrap = document.createElement("div");
+    wrap.className = "grid-wrap";
+    wrap.style.gridTemplateColumns = `repeat(${P.grid}, 76px)`;
+    cells.length = 0;
+    const order = [];
+    for (let i = 0; i < P.grid * P.grid; i++) {
+      const c = document.createElement("div");
+      c.className = "grid-cell";
+      cells.push(c);
+      order.push(i);
+      wrap.appendChild(c);
+    }
+    playArea.appendChild(wrap);
+  }
+  function nextRound() {
+    hudPhase.textContent = state.practice ? "練習" : "本番";
+    hudCount.textContent = state.practice ? "練習" : `長さ ${state.len}`;
+    cells.forEach(c => c.classList.remove("lit", "tapped", "wrongcell"));
+    const seq = Array.from({ length: state.practice ? 2 : state.len }, () => randInt(0, cells.length - 1));
+    let idx = 0;
+    const playSeq = () => {
+      if (idx >= seq.length) { after(300, () => awaitInput(seq)); return; }
+      const c = cells[seq[idx]];
+      c.classList.add("lit");
+      after(P.flashMs, () => { c.classList.remove("lit"); idx++; after(220, playSeq); });
+    };
+    playSeq();
+  }
+  function awaitInput(seq) {
+    let pos = 0;
+    cells.forEach((c, ci) => {
+      c.onclick = null;
+      makeTappable(c, () => {
+        if (pos >= seq.length) return;
+        if (ci === seq[pos]) {
+          c.classList.add("tapped");
+          sndCorrect();
+          pos++;
+          if (pos >= seq.length) {
+            if (state.practice) { state.practice = false; after(500, nextRound); return; }
+            state.misses = 0;
+            state.best = Math.max(state.best, state.len);
+            state.len++;
+            after(500, nextRound);
+          }
+        } else {
+          c.classList.add("wrongcell");
+          sndWrong();
+          cells.forEach(cc => cc.onclick = null);
+          if (state.practice) { after(600, () => { state.practice = false; nextRound(); }); return; }
+          state.misses++;
+          if (state.misses >= 2 || state.len > 12) { after(600, finish); }
+          else { after(600, nextRound); }
+        }
+      });
+    });
+  }
+  function finish() {
+    cells.forEach(c => c.onclick = null);
+    const maxSpanRef = P.grid === 3 ? 7 : 9;
+    const score = Math.max(0, Math.min(100, Math.round(100 * state.best / maxSpanRef)));
+    const detail = `最長で ${state.best} マス連続の位置を再現できました`;
+    finishGame({ maxSpan: state.best }, state.best > 0 ? score : null, detail);
+  }
+}
+
+/* ============================================================
+   個別実装: 仲間はずれ探し
+   ============================================================ */
+function startOddOneOut(id, level) {
+  const P = { easy: { n: 9, base: "🍎", odd: "🍅" }, mid: { n: 16, base: "🐝", odd: "🦋" }, hard: { n: 25, base: "🍇", odd: "🫐" } }[level];
+  const state = { practice: true, rounds: [], roundStart: 0 };
+  countdownThen(() => nextRound());
+  const practiceRounds = 1, timeLimitMs = 45000;
+
+  function nextRound() {
+    hudPhase.textContent = state.practice ? "練習" : "本番";
+    hudCount.textContent = state.practice ? "練習" : `見つけた数: ${state.rounds.filter(r => r.found).length}`;
+    clearPlay();
+    const pts = scatterPositions(P.n, Math.max(0.05, 0.9 / Math.sqrt(P.n)));
+    const oddIdx = randInt(0, pts.length - 1);
+    pts.forEach((p, i) => {
+      const el = document.createElement("div");
+      el.textContent = i === oddIdx ? P.odd : P.base;
+      el.style.fontSize = "2rem";
+      placeScatter(el, p.x, p.y);
+      makeTappable(el, () => {
+        if (i === oddIdx) {
+          sndCorrect();
+          if (state.practice) { state.practice = false; after(300, nextRound); return; }
+          state.rounds.push({ found: true, time: (performance.now() - state.roundStart) / 1000 });
+          after(250, nextRound);
+        } else { sndWrong(); }
+      });
+      playArea.appendChild(el);
+    });
+    state.roundStart = performance.now();
+    if (!state.practice && !state._deadline) {
+      state._deadline = after(timeLimitMs, finish);
+    }
+  }
+  function finish() {
+    const found = state.rounds.filter(r => r.found);
+    const avg = found.length ? found.reduce((a, r) => a + r.time, 0) / found.length : null;
+    const score = state.rounds.length >= 1
+      ? Math.round(Math.max(0, Math.min(100, 100 * (avg ? Math.min(1, (2 + P.n * 0.12) / avg) : 0))))
+      : null;
+    const detail = state.rounds.length
+      ? `${state.rounds.length}個 発見` + (avg ? ` / 平均 ${avg.toFixed(1)}秒` : "")
+      : "見つける前に時間切れになりました";
+    finishGame({ found: state.rounds.length, avgTime: avg ? +avg.toFixed(1) : null }, score, detail);
+  }
+}
+
+/* ============================================================
+   個別実装: 順番タッチ(Trail Making風)
+   ============================================================ */
+function startTrail(id, level) {
+  const P = { easy: { n: 8, partB: false }, mid: { n: 15, partB: false }, hard: { n: 13, partB: true } }[level];
+  const state = { practice: true };
+  countdownThen(() => runBoard(true));
+
+  function runBoard(practice) {
+    hudPhase.textContent = practice ? "練習" : "本番";
+    const n = practice ? 4 : P.n;
+    const seq = [];
+    for (let i = 1; i <= n; i++) {
+      seq.push(P.partB ? (i % 1 === 0 ? String(i) : "") : String(i));
+    }
+    const labels = [];
+    if (P.partB && !practice) {
+      const kana = ["あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ", "さ", "し"];
+      for (let i = 1; i <= n; i++) { labels.push(String(i)); if (i <= kana.length) labels.push(kana[i - 1]); }
+    } else {
+      for (let i = 1; i <= n; i++) labels.push(String(i));
+    }
+    const pts = scatterPositions(labels.length, Math.max(0.06, 0.85 / Math.sqrt(labels.length)));
+    let next = 0, errors = 0;
+    clearPlay();
+    hudCount.textContent = practice ? "練習" : `次: ${labels[0]}`;
+    const startT = performance.now();
+    labels.forEach((lab, i) => {
+      const el = document.createElement("button");
+      el.textContent = lab;
+      el.style.cssText = "width:50px;height:50px;border-radius:50%;background:#1c3a5c;color:#fff;font-size:1.1rem;font-weight:700;border:none;cursor:pointer";
+      placeScatter(el, pts[i].x, pts[i].y);
+      makeTappable(el, () => {
+        if (i === next) {
+          el.style.background = "#2eb872";
+          el.disabled = true;
+          sndCorrect();
+          next++;
+          if (next < labels.length) hudCount.textContent = practice ? "練習" : `次: ${labels[next]}`;
+          if (next >= labels.length) {
+            if (practice) { after(400, () => runBoard(false)); return; }
+            const time = (performance.now() - startT) / 1000;
+            finish(time, errors);
+          }
+        } else {
+          errors++;
+          sndWrong();
+          el.style.background = "#e05555";
+          after(200, () => { if (!el.disabled) el.style.background = "#1c3a5c"; });
+        }
+      });
+      playArea.appendChild(el);
+    });
+  }
+  function finish(time, errors) {
+    const par = 2 + P.n * (P.partB ? 1.6 : 1.0);
+    const speedScore = Math.max(0, Math.min(1, par / time));
+    const score = Math.max(0, Math.round(100 * speedScore - errors * 5));
+    const detail = `完了タイム ${time.toFixed(1)}秒` + (errors ? ` / 誤タップ ${errors}回` : "");
+    finishGame({ time: +time.toFixed(1), errors }, score, detail);
+  }
+}
+
+/* ================= ディスパッチテーブル ================= */
+const RUNNERS = {
+  flashcount: (level) => startFlashRecall("flashcount", level, { gen: genFlashCount(level), mainTrials: 8 }),
+  moredots: (level) => startFlashRecall("moredots", level, { gen: genMoreDots(level), mainTrials: 10 }),
+  lradd: (level) => startFlashRecall("lradd", level, { gen: genLrAdd(level), mainTrials: 8 }),
+  stroop: (level) => startFlashDecide("stroop", level, { gen: genStroop(level), mainTrials: 10, limit: { easy: 0, mid: 3000, hard: 2000 }[level] }),
+  flanker: (level) => startFlashDecide("flanker", level, { gen: genFlanker(level), mainTrials: 10, limit: { easy: 0, mid: 2500, hard: 1800 }[level] }),
+  gonogo: (level) => startStreamTask("gonogo", level, goNoGoCfg(level)),
+  nback: (level) => startStreamTask("nback", level, nbackCfg(level)),
+  cpt: (level) => startStreamTask("cpt", level, cptCfg(level)),
+  mole: (level) => startMole("mole", level),
+  corsi: (level) => startCorsi("corsi", level),
+  oddoneout: (level) => startOddOneOut("oddoneout", level),
+  trail: (level) => startTrail("trail", level),
+};
+
+/* ================= 記録タブ描画 ================= */
+function fmtDate(ts) {
+  const d = new Date(ts);
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+function renderLog() {
+  const data = loadData();
+  const ss = data.sessions;
+  const days = new Set(ss.map(s => new Date(s.ts).toDateString())).size;
+  $("statGrid").innerHTML = `
+    <div class="stat"><div class="num">${ss.length}</div><div class="lbl">総セッション</div></div>
+    <div class="stat"><div class="num">${days}</div><div class="lbl">実施日数</div></div>`;
+
+  const charts = $("charts");
+  charts.innerHTML = "";
+  let any = false;
+  for (const g of GAMES) {
+    const scored = ss.filter(s => s.game === g.id && s.score != null).slice(-15);
+    if (!scored.length) continue;
+    any = true;
+    const div = document.createElement("div");
+    div.style.marginBottom = "14px";
+    const W = 640, H = 120, pad = 26;
+    const n = scored.length;
+    const px = i => pad + (n === 1 ? (W - 2 * pad) / 2 : (W - 2 * pad) * i / (n - 1));
+    const py = v => H - pad / 2 - (H - pad * 1.5) * v / 100;
+    const pts = scored.map((s, i) => `${px(i)},${py(s.score)}`).join(" ");
+    const dots = scored.map((s, i) =>
+      `<circle cx="${px(i)}" cy="${py(s.score)}" r="4" fill="#2b7de9"/>` +
+      `<text x="${px(i)}" y="${py(s.score) - 8}" font-size="10" text-anchor="middle" fill="#7d8b9c">${s.score}</text>`).join("");
+    const last = scored[scored.length - 1].score;
+    const best = Math.max(...scored.map(s => s.score));
+    div.innerHTML = `
+      <div style="font-size:.82rem;font-weight:700;margin-bottom:4px">${g.icon} ${g.name}
+        <span style="color:var(--muted);font-weight:400">最新 ${last}点 / ベスト ${best}点</span></div>
+      <div class="chart-box"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:320px">
+        <line x1="${pad}" y1="${py(0)}" x2="${W - pad}" y2="${py(0)}" stroke="#dfe7f0"/>
+        <line x1="${pad}" y1="${py(50)}" x2="${W - pad}" y2="${py(50)}" stroke="#eef3f9"/>
+        <line x1="${pad}" y1="${py(100)}" x2="${W - pad}" y2="${py(100)}" stroke="#eef3f9"/>
+        <polyline points="${pts}" fill="none" stroke="#2b7de9" stroke-width="2"/>
+        ${dots}
+      </svg></div>`;
+    charts.appendChild(div);
+  }
+  if (!any) charts.innerHTML = '<p class="note">まだスコア付きの記録がありません</p>';
+
+  const list = $("sessList");
+  list.innerHTML = "";
+  if (!ss.length) {
+    list.innerHTML = '<li><span class="when">まだ記録がありません。ゲーム選択タブから始めましょう。</span></li>';
+    return;
+  }
+  for (const s of [...ss].reverse().slice(0, 30)) {
+    const meta = GAMES.find(g => g.id === s.game) || { icon: "❔", name: s.game };
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <span>${meta.icon} <b>${meta.name}</b> <span class="when">${LEVEL_LABEL[s.level]}</span>
+        <span class="when">${s.detail || ""}</span></span>
+      <span><span class="when">${fmtDate(s.ts)}</span>
+        <span class="score">${s.score != null ? s.score + "点" : "実施"}</span></span>`;
+    list.appendChild(li);
+  }
+}
+
+/* テスト・デバッグ用フック(挙動には影響しない) */
+window.__att = { get state() { return G; } };
+</script>
+</body>
+</html>
