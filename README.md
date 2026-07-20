@@ -7,6 +7,13 @@
 | [👁 アイリハビリ](https://shotaro1001.github.io/eye-rehab/) (`index.html`) | 眼球運動障害向けの眼球運動トレーニング。Webカメラの虹彩検出でアイトラッキング評価 |
 | [🧠 注意カレッジ](https://shotaro1001.github.io/eye-rehab/attention.html) (`attention.html`) | 注意機能・反応速度トレーニング12種。カメラ不要、タップ/クリック中心 |
 
+上記は今後も機能追加・修正が入る**最新版**です。QRコードや印刷物など、内容が変わらないURLが必要な場合は下記の**固定版**を使ってください([詳細](./stable/README.md))。
+
+| アプリ(固定版) | URL |
+|---|---|
+| 👁 アイリハビリ(固定・更新なし) | https://shotaro1001.github.io/eye-rehab/stable/ |
+| 🧠 注意カレッジ(固定・更新なし) | https://shotaro1001.github.io/eye-rehab/stable/attention.html |
+
 ---
 
 ## 👁 アイリハビリ
