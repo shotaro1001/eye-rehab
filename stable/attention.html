@@ -410,7 +410,10 @@ function makeTappable(el, onPick) {
   let timer = null;
   const fill = document.createElement("div");
   fill.className = "dwell-fill";
-  el.style.position = el.style.position || "relative";
+  // dwellゲージ(position:absolute)のアンカーにするため位置指定が必要だが、
+  // すでに absolute で座標配置されている要素(scatter-item 等)を上書きしないよう
+  // 計算後の position が static のときだけ relative を付与する。
+  if (getComputedStyle(el).position === "static") el.style.position = "relative";
   el.appendChild(fill);
   function start() {
     if (!SETTINGS.dwell || el.disabled) return;
