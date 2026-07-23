@@ -964,8 +964,8 @@ function cptCfg(level) {
    個別実装: モグラたたき
    ============================================================ */
 function startMole(id, level) {
-  const P = { easy: { waitMin: 1500, waitMax: 3500, window: 1500 }, mid: { waitMin: 1000, waitMax: 3000, window: 1100 }, hard: { waitMin: 600, waitMax: 2200, window: 800 } }[level];
-  const state = { i: 0, practice: true, log: [], flying: 0, waiting: false, appeared: false, appearT: 0 };
+  const P = { easy: { waitMin: 1200, waitMax: 3000, window: 2500 }, mid: { waitMin: 1000, waitMax: 2800, window: 1800 }, hard: { waitMin: 700, waitMax: 2200, window: 1200 } }[level];
+  const state = { i: 0, practice: true, log: [], flying: 0, waiting: false, appeared: false, appearT: 0, graceUntil: 0 };
   countdownThen(() => beginPhase());
   const totalPractice = 3, totalMain = 10;
 
@@ -975,7 +975,11 @@ function startMole(id, level) {
     clearPlay();
     playArea.style.cursor = "pointer";
     playArea.onclick = e => {
-      if (state.waiting && !state.appeared) { state.flying++; showToast("フライング!出るまで待ちましょう"); sndWrong(); }
+      // 待機フェーズ開始直後は、前のモグラへの遅れた反応が混ざるため猶予時間を設け、
+      // その間のクリックはフライング(早押し)として数えない。
+      if (state.waiting && !state.appeared && performance.now() > state.graceUntil) {
+        state.flying++; showToast("フライング!出るまで待ちましょう"); sndWrong();
+      }
     };
     nextTrial();
   }
@@ -988,6 +992,7 @@ function startMole(id, level) {
     hudCount.textContent = state.practice ? `練習 ${state.i + 1}/${totalPractice}` : `${state.i + 1} / ${totalMain}`;
     clearPlay();
     state.waiting = true; state.appeared = false;
+    state.graceUntil = performance.now() + 700; // 待機開始直後の遅れ反応を早押しと誤判定しない
     const wait = randInt(P.waitMin, P.waitMax);
     after(wait, () => {
       state.appeared = true; state.waiting = false;
@@ -1018,15 +1023,17 @@ function startMole(id, level) {
   function finish() {
     playArea.onclick = null;
     const rts = state.log;
-    const mean = rts.length ? Math.round(rts.reduce((a, b) => a + b, 0) / rts.length) : null;
-    const min = rts.length ? Math.round(Math.min(...rts)) : null;
-    const penalty = state.flying * 5;
-    const rtScore = mean == null ? 0 : Math.max(0, Math.min(100, 100 - (mean - 250) / 6));
-    const score = mean == null ? null : Math.max(0, Math.round(rtScore - penalty));
-    const detail = mean != null
-      ? `平均反応 ${mean}ms(最速 ${min}ms)/ 成功 ${rts.length}/${totalMain}` + (state.flying ? ` / フライング ${state.flying}回` : "")
-      : "反応できた回数が足りませんでした";
-    finishGame({ meanRT: mean, minRT: min, flying: state.flying, hits: rts.length }, score, detail);
+    const hits = rts.length;
+    const mean = hits ? Math.round(rts.reduce((a, b) => a + b, 0) / hits) : null;
+    const min = hits ? Math.round(Math.min(...rts)) : null;
+    // 成功数(命中率)を主軸(70点)、反応の速さを補助(30点)、フライングは軽い減点。
+    const hitRate = hits / totalMain;
+    const speedScore = mean == null ? 0 : Math.max(0, Math.min(1, (1300 - mean) / 1000));
+    const score = Math.max(0, Math.round(70 * hitRate + 30 * speedScore - state.flying * 3));
+    const detail = hits
+      ? `成功 ${hits}/${totalMain} / 平均反応 ${mean}ms(最速 ${min}ms)` + (state.flying ? ` / フライング ${state.flying}回` : "")
+      : `成功 0/${totalMain}` + (state.flying ? ` / フライング ${state.flying}回` : "");
+    finishGame({ meanRT: mean, minRT: min, flying: state.flying, hits }, score, detail);
   }
 }
 
