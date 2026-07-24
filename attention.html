@@ -367,12 +367,24 @@ function renderGameList() {
     for (const g of GAMES.filter(x => x.cat === cat)) {
       const row = document.createElement("div");
       row.className = "game-row";
+      // うごく数え専用: 動く速さを10段階(0.05〜0.50)で選べる
+      let extra = "";
+      if (g.id === "movecount") {
+        let opts = "";
+        for (let i = 1; i <= 10; i++) {
+          const v = (0.05 * i).toFixed(2);
+          const label = i === 1 ? `速さ1(おそい)` : i === 10 ? `速さ10(はやい)` : `速さ${i}`;
+          opts += `<option value="${v}"${i === 3 ? " selected" : ""}>${label}</option>`;
+        }
+        extra = `<select class="gr-level" id="spd-${g.id}" title="動く速さ">${opts}</select>`;
+      }
       row.innerHTML = `
         <div class="gr-icon">${g.icon}</div>
         <div class="gr-info">
           <div class="gr-name">${g.name} <span class="gr-cat">${CAT_LABEL[g.cat]}</span></div>
           <div class="gr-rule">${g.rule}</div>
         </div>
+        ${extra}
         <select class="gr-level" id="lv-${g.id}">
           <option value="easy">やさしい</option>
           <option value="mid" selected>ふつう</option>
@@ -1051,6 +1063,9 @@ function startMoveCount(id, level) {
     mid:  { circle: [3, 6], tri: [3, 6], speed: 0.16, moveMs: 5000, size: 40 },
     hard: { circle: [4, 8], tri: [4, 8], speed: 0.24, moveMs: 4500, size: 34 },
   }[level];
+  // 速度セレクター(10段階 0.05〜0.50)があればレベル既定の速さを上書き
+  const spdSel = $("spd-movecount");
+  const speed = spdSel ? parseFloat(spdSel.value) : P.speed;
   const state = { i: 0, practice: true, log: [] };
   const practiceN = 2, mainN = 6;
   countdownThen(() => nextTrial());
@@ -1078,7 +1093,7 @@ function startMoveCount(id, level) {
       items.push({
         el,
         x: 0.1 + Math.random() * 0.8, y: 0.12 + Math.random() * 0.76,
-        vx: Math.cos(ang) * P.speed, vy: Math.sin(ang) * P.speed,
+        vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed,
       });
     };
     for (let k = 0; k < nCircle; k++) mk("circle");
